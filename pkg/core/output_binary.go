@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/tcp"
 	"sync/atomic"
 	"time"
 
@@ -75,7 +74,7 @@ func (o *BinaryOutput) workerMaster() {
 }
 
 func (o *BinaryOutput) startWorker() {
-	client := tcp.NewTCPClient(o.address, &tcp.TCPClientConfig{
+	client := NewTCPClient(o.address, &TCPClientConfig{
 		Debug:              o.config.Debug,
 		Timeout:            o.config.Timeout,
 		ResponseBufferSize: int(o.config.BufferSize),
@@ -145,7 +144,7 @@ func (o *BinaryOutput) PluginRead() (*Message, error) {
 	return &msg, nil
 }
 
-func (o *BinaryOutput) sendRequest(client *tcp.TCPClient, msg *Message) {
+func (o *BinaryOutput) sendRequest(client *TCPClient, msg *Message) {
 	if !protocol.IsRequestPayload(msg.Meta) {
 		return
 	}
