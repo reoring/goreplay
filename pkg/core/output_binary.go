@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/stat"
 	"github.com/reoring/goreplay/pkg/tcp"
 	"sync/atomic"
 	"time"
@@ -33,7 +32,7 @@ type BinaryOutput struct {
 	needWorker    chan int
 	quit          chan struct{}
 	config        *BinaryOutputConfig
-	queueStats    *stat.GorStat
+	queueStats    *GorStat
 }
 
 // NewBinaryOutput constructor for BinaryOutput

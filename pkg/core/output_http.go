@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/stat"
 	"log"
 	"math"
 	"net/http"
@@ -56,7 +55,7 @@ type HTTPOutputConfig struct {
 type HTTPOutput struct {
 	activeWorkers int32
 	config        *HTTPOutputConfig
-	queueStats    *stat.GorStat
+	queueStats    *GorStat
 	elasticSearch *ESPlugin
 	client        *HTTPClient
 	stopWorker    chan struct{}
@@ -108,7 +107,7 @@ func NewHTTPOutput(address string, config *HTTPOutputConfig) PluginReadWriter {
 	o.config = config
 	o.stop = make(chan bool)
 	if o.config.Stats {
-		o.queueStats = stat.NewGorStat("output_http", o.config.StatsMs)
+		o.queueStats = NewGorStat("output_http", o.config.StatsMs)
 	}
 
 	o.queue = make(chan *Message, o.config.QueueLen)

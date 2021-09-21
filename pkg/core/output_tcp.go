@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/stat"
 	"hash/fnv"
 	"net"
 	"time"
@@ -18,7 +17,7 @@ type TCPOutput struct {
 	address     string
 	limit       int
 	buf         []chan *Message
-	bufStats    *stat.GorStat
+	bufStats    *GorStat
 	config      *TCPOutputConfig
 	workerIndex uint32
 
@@ -42,7 +41,7 @@ func NewTCPOutput(address string, config *TCPOutputConfig) PluginWriter {
 	o.config = config
 
 	if Settings.OutputTCPStats {
-		o.bufStats = stat.NewGorStat("output_tcp", 5000)
+		o.bufStats = NewGorStat("output_tcp", 5000)
 	}
 
 	// create X buffers and send the buffer index to the worker
