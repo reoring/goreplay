@@ -1,10 +1,9 @@
-package http
+package core
 
 import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"net/http/httputil"
 	"strconv"
@@ -46,13 +45,13 @@ func PrettifyHTTP(p []byte) []byte {
 		g, err := gzip.NewReader(buf)
 
 		if err != nil {
-			settings.Debug(1, "[Prettifier] GZIP encoding error:", err)
+			Debug(1, "[Prettifier] GZIP encoding error:", err)
 			return []byte{}
 		}
 
 		content, err = ioutil.ReadAll(g)
 		if err != nil {
-			settings.Debug(1, fmt.Sprintf("[HTTP-PRETTIFIER] %q", err))
+			Debug(1, fmt.Sprintf("[HTTP-PRETTIFIER] %q", err))
 			return p
 		}
 

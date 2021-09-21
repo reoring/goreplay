@@ -1,16 +1,14 @@
 package core
 
 import (
-	"github.com/reoring/goreplay/pkg/limiter"
-	"github.com/reoring/goreplay/pkg/settings"
 	"testing"
 )
 
 func TestPluginsRegistration(t *testing.T) {
-	settings.Settings.InputDummy = settings.MultiOption{"[]"}
-	settings.Settings.OutputDummy = settings.MultiOption{"[]"}
-	settings.Settings.OutputHTTP = settings.MultiOption{"www.example.com|10"}
-	settings.Settings.InputFile = settings.MultiOption{"/dev/null"}
+	Settings.InputDummy = MultiOption{"[]"}
+	Settings.OutputDummy = MultiOption{"[]"}
+	Settings.OutputHTTP = MultiOption{"www.example.com|10"}
+	Settings.InputFile = MultiOption{"/dev/null"}
 
 	plugins := NewPlugins()
 
@@ -34,7 +32,7 @@ func TestPluginsRegistration(t *testing.T) {
 		t.Errorf("First output should be DummyOutput")
 	}
 
-	if l, ok := plugins.Outputs[1].(*limiter.Limiter); ok {
+	if l, ok := plugins.Outputs[1].(*Limiter); ok {
 		if _, ok := l.plugin.(*HTTPOutput); !ok {
 			t.Errorf("HTTPOutput should be wrapped in limiter")
 		}

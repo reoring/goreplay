@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"github.com/reoring/goreplay/pkg/core"
-	"github.com/reoring/goreplay/pkg/emitter"
 	"os"
 	"os/exec"
 	"strings"
@@ -79,7 +78,7 @@ func TestMiddlewareEarlyClose(t *testing.T) {
 	pl.Inputs = []core.PluginReader{midd, in}
 	pl.Outputs = []core.PluginWriter{out}
 	pl.All = []interface{}{midd, out, in}
-	e := emitter.NewEmitter()
+	e := core.NewEmitter()
 	go e.Start(pl, "")
 	for i := 0; i < 5; i++ {
 		in.EmitBytes(body)

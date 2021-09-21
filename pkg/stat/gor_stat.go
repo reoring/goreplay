@@ -1,7 +1,7 @@
 package stat
 
 import (
-	"github.com/reoring/goreplay/pkg/settings"
+	"github.com/reoring/goreplay/pkg/core"
 	"runtime"
 	"strconv"
 	"time"
@@ -25,14 +25,14 @@ func NewGorStat(statName string, rateMs int) (s *GorStat) {
 	s.max = 0
 	s.count = 0
 
-	if settings.Settings.Stats {
+	if core.Settings.Stats {
 		go s.reportStats()
 	}
 	return
 }
 
 func (s *GorStat) Write(latest int) {
-	if settings.Settings.Stats {
+	if core.Settings.Stats {
 		if latest > s.max {
 			s.max = latest
 		}
@@ -56,9 +56,9 @@ func (s *GorStat) String() string {
 }
 
 func (s *GorStat) reportStats() {
-	settings.Debug(0, "\n", s.statName+":latest,mean,max,count,count/second,gcount")
+	core.Debug(0, "\n", s.statName+":latest,mean,max,count,count/second,gcount")
 	for {
-		settings.Debug(0, "\n", s)
+		core.Debug(0, "\n", s)
 		s.Reset()
 		time.Sleep(time.Duration(s.rateMs) * time.Millisecond)
 	}

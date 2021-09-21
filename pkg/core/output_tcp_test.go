@@ -2,9 +2,7 @@ package core
 
 import (
 	"bufio"
-	"github.com/reoring/goreplay/pkg/emitter"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"net"
 	"sync"
@@ -26,8 +24,8 @@ func TestTCPOutput(t *testing.T) {
 		Outputs: []PluginWriter{output},
 	}
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
@@ -84,10 +82,10 @@ func BenchmarkTCPOutput(b *testing.B) {
 		Outputs: []PluginWriter{output},
 	}
 
-	emitter := emitter.NewEmitter()
+	emitter := NewEmitter()
 	// avoid counting above initialization
 	b.ResetTimer()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	go emitter.Start(plugins, Settings.Middleware)
 
 	wg.Wait()
 	emitter.Close()

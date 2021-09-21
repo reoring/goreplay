@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/reoring/goreplay/pkg/kafka"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"strings"
 	"time"
@@ -61,7 +60,7 @@ func NewKafkaOutput(address string, config *kafka.OutputKafkaConfig, tlsConfig *
 // ErrorHandler should receive errors
 func (o *KafkaOutput) ErrorHandler() {
 	for err := range o.producer.Errors() {
-		settings.Debug(1, "Failed to write access log entry:", err)
+		Debug(1, "Failed to write access log entry:", err)
 	}
 }
 

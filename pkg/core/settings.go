@@ -1,10 +1,8 @@
-package settings
+package core
 
 import (
 	"flag"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/core"
-	"github.com/reoring/goreplay/pkg/http"
 	"github.com/reoring/goreplay/pkg/kafka"
 	"github.com/reoring/goreplay/pkg/version"
 	"os"
@@ -43,10 +41,10 @@ type AppSettings struct {
 	OutputStdout bool `json:"output-stdout"`
 	OutputNull   bool `json:"output-null"`
 
-	InputTCP       MultiOption `json:"input-tcp"`
-	InputTCPConfig core.TCPInputConfig
+	InputTCP        MultiOption `json:"input-tcp"`
+	InputTCPConfig  TCPInputConfig
 	OutputTCP       MultiOption `json:"output-tcp"`
-	OutputTCPConfig core.TCPOutputConfig
+	OutputTCPConfig TCPOutputConfig
 	OutputTCPStats  bool `json:"output-tcp-stats"`
 
 	InputFile        MultiOption   `json:"input-file"`
@@ -55,10 +53,10 @@ type AppSettings struct {
 	InputFileDryRun    bool          `json:"input-file-dry-run"`
 	InputFileMaxWait time.Duration `json:"input-file-max-wait"`
 	OutputFile       MultiOption   `json:"output-file"`
-	OutputFileConfig core.FileOutputConfig
+	OutputFileConfig FileOutputConfig
 
 	InputRAW MultiOption `json:"input_raw"`
-	core.RAWInputConfig
+	RAWInputConfig
 
 	Middleware string `json:"middleware"`
 
@@ -66,12 +64,12 @@ type AppSettings struct {
 	OutputHTTP   MultiOption `json:"output-http"`
 	PrettifyHTTP bool        `json:"prettify-http"`
 
-	OutputHTTPConfig core.HTTPOutputConfig
+	OutputHTTPConfig HTTPOutputConfig
 
 	OutputBinary       MultiOption `json:"output-binary"`
-	OutputBinaryConfig core.BinaryOutputConfig
+	OutputBinaryConfig BinaryOutputConfig
 
-	ModifierConfig http.HTTPModifierConfig
+	ModifierConfig HTTPModifierConfig
 
 	InputKafkaConfig  kafka.InputKafkaConfig
 	OutputKafkaConfig kafka.OutputKafkaConfig

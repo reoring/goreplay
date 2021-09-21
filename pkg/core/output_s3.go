@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/reoring/goreplay/pkg/pro"
 	s32 "github.com/reoring/goreplay/pkg/s3"
-	"github.com/reoring/goreplay/pkg/settings"
 	_ "io"
 	"log"
 	"math/rand"
@@ -113,7 +112,7 @@ func (o *S3Output) onBufferUpdate(path string) {
 
 	file, err := os.Open(path)
 	if err != nil {
-		settings.Debug(0, fmt.Sprintf("[S3 Output] Failed to open file %q. err: %q", path, err))
+		Debug(0, fmt.Sprintf("[S3 Output] Failed to open file %q. err: %q", path, err))
 		return
 	}
 	defer os.Remove(path)
@@ -124,7 +123,7 @@ func (o *S3Output) onBufferUpdate(path string) {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		settings.Debug(0, fmt.Sprintf("[S3 Output] Failed to upload data to %q/%q, %q", bucket, key, err))
+		Debug(0, fmt.Sprintf("[S3 Output] Failed to upload data to %q/%q, %q", bucket, key, err))
 		return
 	}
 

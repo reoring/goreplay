@@ -2,9 +2,7 @@ package core
 
 import (
 	"github.com/reoring/goreplay/pkg"
-	"github.com/reoring/goreplay/pkg/emitter"
 	http2 "github.com/reoring/goreplay/pkg/http"
-	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -40,9 +38,9 @@ func TestHTTPOutput(t *testing.T) {
 	}))
 	defer server.Close()
 
-	headers := http2.HTTPHeaders{http2.httpHeader{"User-Agent", "Gor"}}
-	methods := http2.HTTPMethods{[]byte("GET"), []byte("PUT"), []byte("POST")}
-	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{Headers: headers, Methods: methods}
+	headers := HTTPHeaders{http2.httpHeader{"User-Agent", "Gor"}}
+	methods := HTTPMethods{[]byte("GET"), []byte("PUT"), []byte("POST")}
+	Settings.ModifierConfig = HTTPModifierConfig{Headers: headers, Methods: methods}
 
 	httpOutput := NewHTTPOutput(server.URL, &HTTPOutputConfig{TrackResponses: false})
 	output := NewTestOutput(func(*Message) {
@@ -55,8 +53,8 @@ func TestHTTPOutput(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, output, httpOutput)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	for i := 0; i < 10; i++ {
 		// 2 http-output, 2 - test output request
@@ -69,7 +67,7 @@ func TestHTTPOutput(t *testing.T) {
 	wg.Wait()
 	emitter.Close()
 
-	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{}
+	Settings.ModifierConfig = HTTPModifierConfig{}
 }
 
 func TestHTTPOutputKeepOriginalHost(t *testing.T) {
@@ -86,8 +84,8 @@ func TestHTTPOutputKeepOriginalHost(t *testing.T) {
 	}))
 	defer server.Close()
 
-	headers := http2.HTTPHeaders{http2.httpHeader{"Host", "custom-host.com"}}
-	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{Headers: headers}
+	headers := HTTPHeaders{http2.httpHeader{"Host", "custom-host.com"}}
+	Settings.ModifierConfig = HTTPModifierConfig{Headers: headers}
 
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{OriginalHost: true, SkipVerify: true})
 
@@ -97,15 +95,15 @@ func TestHTTPOutputKeepOriginalHost(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	wg.Add(1)
 	input.EmitGET()
 
 	wg.Wait()
 	emitter.Close()
-	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{}
+	Settings.ModifierConfig = HTTPModifierConfig{}
 }
 
 func TestHTTPOutputSSL(t *testing.T) {
@@ -125,8 +123,8 @@ func TestHTTPOutputSSL(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	wg.Add(2)
 
@@ -148,8 +146,8 @@ func TestHTTPOutputSessions(t *testing.T) {
 	}))
 	defer server.Close()
 
-	settings.Settings.RecognizeTCPSessions = true
-	settings.Settings.SplitOutput = true
+	Settings.RecognizeTCPSessions = true
+	Settings.SplitOutput = true
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{})
 
 	plugins := &InOutPlugins{
@@ -157,8 +155,8 @@ func TestHTTPOutputSessions(t *testing.T) {
 		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	uuid1 := []byte("1234567890123456789a0000")
 	uuid2 := []byte("1234567890123456789d0000")
@@ -179,8 +177,8 @@ func TestHTTPOutputSessions(t *testing.T) {
 
 	emitter.Close()
 
-	settings.Settings.RecognizeTCPSessions = false
-	settings.Settings.SplitOutput = false
+	Settings.RecognizeTCPSessions = false
+	Settings.SplitOutput = false
 }
 
 func BenchmarkHTTPOutput(b *testing.B) {
@@ -200,8 +198,8 @@ func BenchmarkHTTPOutput(b *testing.B) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)
@@ -229,8 +227,8 @@ func BenchmarkHTTPOutputTLS(b *testing.B) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)

@@ -2,8 +2,6 @@ package core
 
 import (
 	"bytes"
-	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -72,9 +70,9 @@ func TestRAWInputIPv4(t *testing.T) {
 	plugins.All = append(plugins.All, input, output)
 
 	addr := "http://127.0.0.1:" + port
-	emitter := emitter.NewEmitter()
+	emitter := NewEmitter()
 	defer emitter.Close()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	go emitter.Start(plugins, Settings.Middleware)
 
 	// time.Sleep(time.Second)
 	for i := 0; i < 1; i++ {
@@ -139,8 +137,8 @@ func TestRAWInputNoKeepAlive(t *testing.T) {
 
 	addr := "http://127.0.0.1:" + port
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	for i := 0; i < 10; i++ {
 		// request + response
@@ -201,9 +199,9 @@ func TestRAWInputIPv6(t *testing.T) {
 		Outputs: []PluginWriter{output},
 	}
 
-	emitter := emitter.NewEmitter()
+	emitter := NewEmitter()
 	addr := "http://" + originAddr
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	go emitter.Start(plugins, Settings.Middleware)
 	for i := 0; i < 10; i++ {
 		// request + response
 		wg.Add(2)
@@ -266,9 +264,9 @@ func TestInputRAWChunkedEncoding(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, httpOutput)
 
-	emitter := emitter.NewEmitter()
+	emitter := NewEmitter()
 	defer emitter.Close()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	go emitter.Start(plugins, Settings.Middleware)
 	wg.Add(2)
 
 	curl := exec.Command("curl", "http://"+originAddr, "--header", "Transfer-Encoding: chunked", "--header", "Expect:", "--data-binary", "@README.md")
@@ -339,8 +337,8 @@ func BenchmarkRAWInputWithReplay(b *testing.B) {
 		Outputs: []PluginWriter{testOutput, httpOutput},
 	}
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 	addr := "http://" + originAddr
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

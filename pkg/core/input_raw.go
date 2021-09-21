@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"net"
 	"strconv"
@@ -100,11 +99,11 @@ func (i *RAWInput) PluginRead() (*Message, error) {
 
 	// to be removed....
 	if msgTCP.Truncated {
-		settings.Debug(2, "[INPUT-RAW] message truncated, increase copy-buffer-size")
+		Debug(2, "[INPUT-RAW] message truncated, increase copy-buffer-size")
 	}
 	// to be removed...
 	if msgTCP.TimedOut {
-		settings.Debug(2, "[INPUT-RAW] message timeout reached, increase input-raw-expire")
+		Debug(2, "[INPUT-RAW] message timeout reached, increase input-raw-expire")
 	}
 	if i.Stats {
 		stat := msgTCP.Stats
@@ -130,7 +129,7 @@ func (i *RAWInput) listen(address string) {
 	ctx, i.cancelListener = context.WithCancel(context.Background())
 	errCh := i.listener.ListenBackground(ctx)
 	<-i.listener.Reading
-	settings.Debug(1, i)
+	Debug(1, i)
 	go func() {
 		<-errCh // the listener closed voluntarily
 		i.Close()

@@ -3,8 +3,6 @@ package core
 import (
 	"fmt"
 	"github.com/reoring/goreplay/pkg"
-	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/settings"
 	"math/rand"
 	"os"
 	"reflect"
@@ -29,8 +27,8 @@ func TestFileOutput(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	for i := 0; i < 100; i++ {
 		wg.Add(2)
@@ -55,7 +53,7 @@ func TestFileOutput(t *testing.T) {
 	plugins2.All = append(plugins2.All, input2, output2)
 
 	emitter2 := emitter.NewEmitter()
-	go emitter2.Start(plugins2, settings.Settings.Middleware)
+	go emitter2.Start(plugins2, Settings.Middleware)
 
 	wg.Wait()
 	emitter2.Close()

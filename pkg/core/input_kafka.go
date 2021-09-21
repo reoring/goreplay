@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/reoring/goreplay/pkg/kafka"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"strings"
 
@@ -75,7 +74,7 @@ func NewKafkaInput(address string, config *kafka.InputKafkaConfig, tlsConfig *ka
 // ErrorHandler should receive errors
 func (i *KafkaInput) ErrorHandler(consumer sarama.PartitionConsumer) {
 	for err := range consumer.Errors() {
-		settings.Debug(1, "Failed to read access log entry:", err)
+		Debug(1, "Failed to read access log entry:", err)
 	}
 }
 
@@ -98,7 +97,7 @@ func (i *KafkaInput) PluginRead() (*Message, error) {
 		var err error
 		msg.Data, err = kafkaMessage.Dump()
 		if err != nil {
-			settings.Debug(1, "[INPUT-KAFKA] failed to decode access log entry:", err)
+			Debug(1, "[INPUT-KAFKA] failed to decode access log entry:", err)
 			return nil, err
 		}
 	}

@@ -7,8 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/core"
-	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/settings"
 	"github.com/reoring/goreplay/pkg/version"
 	"log"
 	"net/http"
@@ -82,12 +80,12 @@ func main() {
 		}
 		dir, _ := os.Getwd()
 
-		settings.Debug(0, "Started example file server for current directory on address ", args[1])
+		core.Debug(0, "Started example file server for current directory on address ", args[1])
 
 		log.Fatal(http.ListenAndServe(args[1], loggingMiddleware(args[1], http.FileServer(http.Dir(dir)))))
 	} else {
 		flag.Parse()
-		settings.CheckSettings()
+		core.CheckSettings()
 		plugins = core.NewPlugins()
 	}
 
@@ -105,20 +103,20 @@ func main() {
 		profileCPU(*cpuprofile)
 	}
 
-	if settings.Settings.Pprof != "" {
+	if core.Settings.Pprof != "" {
 		go func() {
-			log.Println(http.ListenAndServe(settings.Settings.Pprof, nil))
+			log.Println(http.ListenAndServe(core.Settings.Pprof, nil))
 		}()
 	}
 
 	closeCh := make(chan int)
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
-	if settings.Settings.ExitAfter > 0 {
-		log.Printf("Running gor for a duration of %s\n", settings.Settings.ExitAfter)
+	emitter := core.NewEmitter()
+	go emitter.Start(plugins, core.Settings.Middleware)
+	if core.Settings.ExitAfter > 0 {
+		log.Printf("Running gor for a duration of %s\n", core.Settings.ExitAfter)
 
-		time.AfterFunc(settings.Settings.ExitAfter, func() {
-			log.Printf("gor run timeout %s\n", settings.Settings.ExitAfter)
+		time.AfterFunc(core.Settings.ExitAfter, func() {
+			log.Printf("gor run timeout %s\n", core.Settings.ExitAfter)
 			close(closeCh)
 		})
 	}

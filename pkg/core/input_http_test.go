@@ -2,8 +2,6 @@ package core
 
 import (
 	"bytes"
-	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/settings"
 	"net/http"
 	"strings"
 	"sync"
@@ -26,8 +24,8 @@ func TestHTTPInput(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	address := strings.Replace(input.address, "[::]", "127.0.0.1", -1)
 
@@ -60,9 +58,9 @@ func TestInputHTTPLargePayload(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
+	emitter := NewEmitter()
 	defer emitter.Close()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	go emitter.Start(plugins, Settings.Middleware)
 
 	address := strings.Replace(input.address, "[::]", "127.0.0.1", -1)
 	var req *http.Request

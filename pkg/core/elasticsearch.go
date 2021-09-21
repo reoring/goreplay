@@ -1,8 +1,7 @@
-package elasticsearch
+package core
 
 import (
 	"encoding/json"
-	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"net/url"
 	"strings"
@@ -102,7 +101,7 @@ func (p *ESPlugin) Init(URI string) {
 
 	go p.ErrorHandler()
 
-	settings.Debug(1, "Initialized Elasticsearch Plugin")
+	Debug(1, "Initialized Elasticsearch Plugin")
 	return
 }
 
@@ -114,7 +113,7 @@ func (p *ESPlugin) IndexerShutdown() {
 func (p *ESPlugin) ErrorHandler() {
 	for {
 		errBuf := <-p.indexor.ErrorChannel
-		settings.Debug(1, "[ELASTICSEARCH]", errBuf.Err)
+		Debug(1, "[ELASTICSEARCH]", errBuf.Err)
 	}
 }
 
@@ -160,7 +159,7 @@ func (p *ESPlugin) ResponseAnalyze(req, resp []byte, start, stop time.Time) {
 	}
 	j, err := json.Marshal(&esResp)
 	if err != nil {
-		settings.Debug(0, "[ELASTIC-RESPONSE]", err)
+		Debug(0, "[ELASTIC-RESPONSE]", err)
 	} else {
 		p.indexor.Index(p.Index, "RequestResponse", "", "", "", &t, j)
 	}

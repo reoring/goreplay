@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"log"
 	"net"
@@ -90,7 +89,7 @@ func (i *TCPInput) listen(address string) {
 				continue
 			}
 			if operr, ok := err.(*net.OpError); ok && operr.Err.Error() != "use of closed network connection" {
-				settings.Debug(0, fmt.Sprintf("[INPUT-TCP] listener closed, err: %q", err))
+				Debug(0, fmt.Sprintf("[INPUT-TCP] listener closed, err: %q", err))
 			}
 			break
 		}
@@ -112,7 +111,7 @@ func (i *TCPInput) handleConnection(conn net.Conn) {
 				continue
 			}
 			if err != io.EOF {
-				settings.Debug(0, fmt.Sprintf("[INPUT-TCP] connection error: %q", err))
+				Debug(0, fmt.Sprintf("[INPUT-TCP] connection error: %q", err))
 			}
 			break
 		}

@@ -5,9 +5,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/elasticsearch"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"github.com/reoring/goreplay/pkg/stat"
 	"log"
 	"math"
@@ -59,7 +57,7 @@ type HTTPOutput struct {
 	activeWorkers int32
 	config        *HTTPOutputConfig
 	queueStats    *stat.GorStat
-	elasticSearch *elasticsearch.ESPlugin
+	elasticSearch *ESPlugin
 	client        *HTTPClient
 	stopWorker    chan struct{}
 	queue         chan *Message
@@ -121,7 +119,7 @@ func NewHTTPOutput(address string, config *HTTPOutputConfig) PluginReadWriter {
 	o.stopWorker = make(chan struct{})
 
 	if o.config.ElasticSearch != "" {
-		o.elasticSearch = new(elasticsearch.ESPlugin)
+		o.elasticSearch = new(ESPlugin)
 		o.elasticSearch.Init(o.config.ElasticSearch)
 	}
 	o.client = NewHTTPClient(o.config)
@@ -226,7 +224,7 @@ func (o *HTTPOutput) sendRequest(client *HTTPClient, msg *Message) {
 	stop := time.Now()
 
 	if err != nil {
-		settings.Debug(1, fmt.Sprintf("[HTTP-OUTPUT] error when sending: %q", err))
+		Debug(1, fmt.Sprintf("[HTTP-OUTPUT] error when sending: %q", err))
 		return
 	}
 	if resp == nil {
@@ -268,12 +266,12 @@ func NewHTTPClient(config *HTTPOutputConfig) *HTTPClient {
 		Timeout: client.config.Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= client.config.RedirectLimit {
-				settings.Debug(1, fmt.Sprintf("[HTTPCLIENT] maximum output-http-redirects[%d] reached!", client.config.RedirectLimit))
+				Debug(1, fmt.Sprintf("[HTTPCLIENT] maximum output-http-redirects[%d] reached!", client.config.RedirectLimit))
 				return http.ErrUseLastResponse
 			}
 			lastReq := via[len(via)-1]
 			resp := req.Response
-			settings.Debug(2, fmt.Sprintf("[HTTPCLIENT] HTTP redirects from %q to %q with %q", lastReq.Host, req.Host, resp.Status))
+			Debug(2, fmt.Sprintf("[HTTPCLIENT] HTTP redirects from %q to %q with %q", lastReq.Host, req.Host, resp.Status))
 			return nil
 		},
 	}

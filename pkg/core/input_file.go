@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"github.com/reoring/goreplay/pkg/protocol"
 	s32 "github.com/reoring/goreplay/pkg/s3"
-	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"math"
 	"os"
@@ -78,7 +77,7 @@ func (f *fileInputReader) parse(init chan struct{}) error {
 
 		if err != nil {
 			if err != io.EOF {
-				settings.Debug(1, err)
+				Debug(1, err)
 			}
 
 			f.Close()
@@ -163,7 +162,7 @@ func newFileInputReader(path string, readDepth int) *fileInputReader {
 	}
 
 	if err != nil {
-		settings.Debug(0, fmt.Sprintf("[INPUT-FILE] err: %q", err))
+		Debug(0, fmt.Sprintf("[INPUT-FILE] err: %q", err))
 		return nil
 	}
 
@@ -171,7 +170,7 @@ func newFileInputReader(path string, readDepth int) *fileInputReader {
 	if strings.HasSuffix(path, ".gz") {
 		gzReader, err := gzip.NewReader(file)
 		if err != nil {
-			settings.Debug(0, fmt.Sprintf("[INPUT-FILE] err: %q", err))
+			Debug(0, fmt.Sprintf("[INPUT-FILE] err: %q", err))
 			return nil
 		}
 		r.reader = bufio.NewReader(gzReader)
@@ -245,7 +244,7 @@ func (i *FileInput) init() (err error) {
 
 		resp, err := svc.ListObjects(params)
 		if err != nil {
-			settings.Debug(2, "[INPUT-FILE] Error while retrieving list of files from S3", i.path, err)
+			Debug(2, "[INPUT-FILE] Error while retrieving list of files from S3", i.path, err)
 			return err
 		}
 
@@ -253,12 +252,12 @@ func (i *FileInput) init() (err error) {
 			matches = append(matches, "s3://"+bucket+"/"+(*c.Key))
 		}
 	} else if matches, err = filepath.Glob(i.path); err != nil {
-		settings.Debug(2, "[INPUT-FILE] Wrong file pattern", i.path, err)
+		Debug(2, "[INPUT-FILE] Wrong file pattern", i.path, err)
 		return
 	}
 
 	if len(matches) == 0 {
-		settings.Debug(2, "[INPUT-FILE] No files match pattern: ", i.path)
+		Debug(2, "[INPUT-FILE] No files match pattern: ", i.path)
 		return errors.New("no matching files")
 	}
 
@@ -402,7 +401,7 @@ func (i *FileInput) emit() {
 	i.stats.Set("max_wait", time.Duration(maxWait))
 	i.stats.Set("min_wait", time.Duration(minWait))
 
-	settings.Debug(2, fmt.Sprintf("[INPUT-FILE] FileInput: end of file '%s'\n", i.path))
+	Debug(2, fmt.Sprintf("[INPUT-FILE] FileInput: end of file '%s'\n", i.path))
 
 	if i.dryRun {
 		fmt.Printf("Records found: %v\nFiles processed: %v\nBytes processed: %v\nMax wait: %v\nMin wait: %v\nFirst wait: %v\nIt will take `%v` to replay at current speed.\nFound %v records with out of order timestamp\n",

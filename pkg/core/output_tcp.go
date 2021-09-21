@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"github.com/reoring/goreplay/pkg/stat"
 	"hash/fnv"
 	"net"
@@ -42,7 +41,7 @@ func NewTCPOutput(address string, config *TCPOutputConfig) PluginWriter {
 	o.address = address
 	o.config = config
 
-	if settings.Settings.OutputTCPStats {
+	if Settings.OutputTCPStats {
 		o.bufStats = stat.NewGorStat("output_tcp", 5000)
 	}
 
@@ -68,7 +67,7 @@ func (o *TCPOutput) worker(bufferIndex int) {
 			break
 		}
 
-		settings.Debug(1, fmt.Sprintf("Can't connect to aggregator instance, reconnecting in 1 second. Retries:%d", retries))
+		Debug(1, fmt.Sprintf("Can't connect to aggregator instance, reconnecting in 1 second. Retries:%d", retries))
 		time.Sleep(1 * time.Second)
 
 		conn, err = o.connect(o.address)
@@ -76,7 +75,7 @@ func (o *TCPOutput) worker(bufferIndex int) {
 	}
 
 	if retries > 0 {
-		settings.Debug(2, fmt.Sprintf("Connected to aggregator instance after %d retries", retries))
+		Debug(2, fmt.Sprintf("Connected to aggregator instance after %d retries", retries))
 	}
 
 	defer conn.Close()
@@ -90,7 +89,7 @@ func (o *TCPOutput) worker(bufferIndex int) {
 		}
 
 		if err != nil {
-			settings.Debug(2, "INFO: TCP output connection closed, reconnecting")
+			Debug(2, "INFO: TCP output connection closed, reconnecting")
 			o.buf[bufferIndex] <- msg
 			go o.worker(bufferIndex)
 			break
@@ -118,7 +117,7 @@ func (o *TCPOutput) PluginWrite(msg *Message) (n int, err error) {
 	bufferIndex := o.getBufferIndex(msg)
 	o.buf[bufferIndex] <- msg
 
-	if settings.Settings.OutputTCPStats {
+	if Settings.OutputTCPStats {
 		o.bufStats.Write(len(o.buf[bufferIndex]))
 	}
 

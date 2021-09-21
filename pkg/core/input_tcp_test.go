@@ -8,8 +8,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"github.com/reoring/goreplay/pkg"
-	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -34,8 +32,8 @@ func TestTCPInput(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", input.listener.Addr().String())
 
@@ -119,8 +117,8 @@ func TestTCPInputSecure(t *testing.T) {
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := emitter.NewEmitter()
-	go emitter.Start(plugins, settings.Settings.Middleware)
+	emitter := NewEmitter()
+	go emitter.Start(plugins, Settings.Middleware)
 
 	conf := &tls.Config{
 		InsecureSkipVerify: true,

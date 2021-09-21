@@ -6,9 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/core"
-	"github.com/reoring/goreplay/pkg/http"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"os"
 	"os/exec"
@@ -61,7 +59,7 @@ func NewMiddleware(command string) *Middleware {
 					return
 				}
 			}
-			settings.Debug(0, fmt.Sprintf("[MIDDLEWARE] command[%q] error: %q", command, err.Error()))
+			core.Debug(0, fmt.Sprintf("[MIDDLEWARE] command[%q] error: %q", command, err.Error()))
 		}
 	}()
 
@@ -70,7 +68,7 @@ func NewMiddleware(command string) *Middleware {
 
 // ReadFrom start a worker to read from this plugin
 func (m *Middleware) ReadFrom(plugin core.PluginReader) {
-	settings.Debug(2, fmt.Sprintf("[MIDDLEWARE] command[%q] Starting reading from %q", m.command, plugin))
+	core.Debug(2, fmt.Sprintf("[MIDDLEWARE] command[%q] Starting reading from %q", m.command, plugin))
 	go m.copy(m.Stdin, plugin)
 }
 
@@ -86,8 +84,8 @@ func (m *Middleware) copy(to io.Writer, from core.PluginReader) {
 			continue
 		}
 		buf = msg.Data
-		if settings.Settings.PrettifyHTTP {
-			buf = http.PrettifyHTTP(msg.Data)
+		if core.Settings.PrettifyHTTP {
+			buf = core.PrettifyHTTP(msg.Data)
 		}
 		dstLen := (len(buf)+len(msg.Meta))*2 + 1
 		// if enough space was previously allocated use it instead
@@ -121,7 +119,7 @@ func (m *Middleware) read(from io.Reader) {
 		}
 		buf := make([]byte, (len(line)-1)/2)
 		if _, err := hex.Decode(buf, line[:len(line)-1]); err != nil {
-			settings.Debug(0, fmt.Sprintf("[MIDDLEWARE] command[%q] failed to decode err: %q", m.command, err))
+			core.Debug(0, fmt.Sprintf("[MIDDLEWARE] command[%q] failed to decode err: %q", m.command, err))
 			continue
 		}
 		var msg core.Message

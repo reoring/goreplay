@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"log"
 	"math/rand"
@@ -256,7 +255,7 @@ func (o *FileOutput) PluginWrite(msg *Message) (n int, err error) {
 	o.currentFileSize += n
 	o.QueueLength++
 
-	if settings.Settings.OutputFileConfig.OutputFileMaxSize > 0 && o.totalFileSize >= settings.Settings.OutputFileConfig.OutputFileMaxSize {
+	if Settings.OutputFileConfig.OutputFileMaxSize > 0 && o.totalFileSize >= Settings.OutputFileConfig.OutputFileMaxSize {
 		return n, errors.New("File output reached size limit")
 	}
 
@@ -267,7 +266,7 @@ func (o *FileOutput) flush() {
 	// Don't exit on panic
 	defer func() {
 		if r := recover(); r != nil {
-			settings.Debug(0, "[OUTPUT-FILE] PANIC while file flush: ", r, o, string(debug.Stack()))
+			Debug(0, "[OUTPUT-FILE] PANIC while file flush: ", r, o, string(debug.Stack()))
 		}
 	}()
 
@@ -284,7 +283,7 @@ func (o *FileOutput) flush() {
 		if stat, err := o.file.Stat(); err == nil {
 			o.currentFileSize = int(stat.Size())
 		} else {
-			settings.Debug(0, "[OUTPUT-HTTP] error accessing file size", err)
+			Debug(0, "[OUTPUT-HTTP] error accessing file size", err)
 		}
 	}
 }

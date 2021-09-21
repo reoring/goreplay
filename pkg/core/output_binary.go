@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/reoring/goreplay/pkg/protocol"
-	"github.com/reoring/goreplay/pkg/settings"
 	"github.com/reoring/goreplay/pkg/stat"
 	"github.com/reoring/goreplay/pkg/tcp"
 	"sync/atomic"
@@ -159,7 +158,7 @@ func (o *BinaryOutput) sendRequest(client *tcp.TCPClient, msg *Message) {
 	stop := time.Now()
 
 	if err != nil {
-		settings.Debug(1, "Request error:", err)
+		Debug(1, "Request error:", err)
 	}
 
 	if o.config.TrackResponses {
