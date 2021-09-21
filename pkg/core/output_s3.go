@@ -4,7 +4,6 @@ import (
 	_ "bufio"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/pro"
-	s32 "github.com/reoring/goreplay/pkg/s3"
 	_ "io"
 	"log"
 	"math/rand"
@@ -64,7 +63,7 @@ func NewS3Output(pathTemplate string, config *FileOutputConfig) *S3Output {
 
 func (o *S3Output) connect() {
 	if o.session == nil {
-		o.session = session.Must(session.NewSession(s32.AwsConfig()))
+		o.session = session.Must(session.NewSession(AwsConfig()))
 		log.Println("[S3 Output] S3 connection successfully initialized")
 	}
 }

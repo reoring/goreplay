@@ -9,7 +9,6 @@ import (
 	"expvar"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/protocol"
-	s32 "github.com/reoring/goreplay/pkg/s3"
 	"io"
 	"math"
 	"os"
@@ -156,7 +155,7 @@ func newFileInputReader(path string, readDepth int) *fileInputReader {
 	var err error
 
 	if strings.HasPrefix(path, "s3://") {
-		file = s32.NewS3ReadCloser(path)
+		file = NewS3ReadCloser(path)
 	} else {
 		file, err = os.Open(path)
 	}
@@ -232,7 +231,7 @@ func (i *FileInput) init() (err error) {
 	var matches []string
 
 	if strings.HasPrefix(i.path, "s3://") {
-		sess := session.Must(session.NewSession(s32.AwsConfig()))
+		sess := session.Must(session.NewSession(AwsConfig()))
 		svc := s3.New(sess)
 
 		bucket, key := ParseS3Url(i.path)

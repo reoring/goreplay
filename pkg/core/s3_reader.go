@@ -1,8 +1,7 @@
-package s3
+package core
 
 import (
 	"bytes"
-	"github.com/reoring/goreplay/pkg/core"
 	"github.com/reoring/goreplay/pkg/pro"
 	"log"
 	"os"
@@ -59,7 +58,7 @@ func NewS3ReadCloser(path string) *S3ReadCloser {
 		return nil
 	}
 
-	bucket, key := core.ParseS3Url(path)
+	bucket, key := ParseS3Url(path)
 	sess := session.Must(session.NewSession(AwsConfig()))
 
 	log.Println("[S3 Input] S3 connection successfully initialized", path)

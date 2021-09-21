@@ -1,10 +1,9 @@
 // +build pro
 
-package s3
+package core
 
 import (
 	"fmt"
-	"github.com/reoring/goreplay/pkg/core"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -20,7 +19,7 @@ func TestS3Output(t *testing.T) {
 	rnd := rand.Int63()
 	path := fmt.Sprintf("s3://test-gor/%d/requests.gz", rnd)
 
-	output := core.NewS3Output(path, &core.FileOutputConfig{queueLimit: 2})
+	output := NewS3Output(path, &FileOutputConfig{queueLimit: 2})
 
 	svc := s3.New(output.session)
 
@@ -64,7 +63,7 @@ func TestS3OutputQueueLimit(t *testing.T) {
 	rnd := rand.Int63()
 	path := fmt.Sprintf("s3://test-gor/%d/requests.gz", rnd)
 
-	output := core.NewS3Output(path, &core.FileOutputConfig{queueLimit: 100})
+	output := NewS3Output(path, &FileOutputConfig{queueLimit: 100})
 	output.closeCh = make(chan struct{}, 3)
 
 	svc := s3.New(output.session)
@@ -111,7 +110,7 @@ func TestInputFileFromS3(t *testing.T) {
 	rnd := rand.Int63()
 	path := fmt.Sprintf("s3://test-gor-eu/%d/requests.gz", rnd)
 
-	output := core.NewS3Output(path, &core.FileOutputConfig{queueLimit: 5000})
+	output := NewS3Output(path, &FileOutputConfig{queueLimit: 5000})
 	output.closeCh = make(chan struct{}, 10)
 
 	for i := 0; i <= 20000; i++ {
@@ -128,7 +127,7 @@ func TestInputFileFromS3(t *testing.T) {
 		<-output.closeCh
 	}
 
-	input := core.NewFileInput(fmt.Sprintf("s3://test-gor-eu/%d", rnd), false, 100, 0, false)
+	input := NewFileInput(fmt.Sprintf("s3://test-gor-eu/%d", rnd), false, 100, 0, false)
 
 	buf := make([]byte, 1000)
 	for i := 0; i <= 19999; i++ {
