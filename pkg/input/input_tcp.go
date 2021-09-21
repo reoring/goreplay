@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
@@ -47,7 +46,7 @@ func NewTCPInput(address string, config *TCPInputConfig) (i *TCPInput) {
 func (i *TCPInput) PluginRead() (msg *plugin.Message, err error) {
 	select {
 	case <-i.stop:
-		return nil, main.ErrorStopped
+		return nil, ErrorStopped
 	case msg = <-i.data:
 		return msg, nil
 	}
