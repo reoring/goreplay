@@ -1,11 +1,10 @@
-package middleware
+package core
 
 import (
 	"bufio"
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/core"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"io"
 	"os"
@@ -18,7 +17,7 @@ import (
 // Middleware represents a middleware object
 type Middleware struct {
 	command       string
-	data          chan *core.Message
+	data          chan *Message
 	Stdin         io.Writer
 	Stdout        io.Reader
 	commandCancel context.CancelFunc
@@ -31,7 +30,7 @@ type Middleware struct {
 func NewMiddleware(command string) *Middleware {
 	m := new(Middleware)
 	m.command = command
-	m.data = make(chan *core.Message, 1000)
+	m.data = make(chan *Message, 1000)
 	m.stop = make(chan bool)
 
 	commands := strings.Split(command, " ")
@@ -59,7 +58,7 @@ func NewMiddleware(command string) *Middleware {
 					return
 				}
 			}
-			core.Debug(0, fmt.Sprintf("[MIDDLEWARE] command[%q] error: %q", command, err.Error()))
+			Debug(0, fmt.Sprintf("[MIDDLEWARE] command[%q] error: %q", command, err.Error()))
 		}
 	}()
 
@@ -67,12 +66,12 @@ func NewMiddleware(command string) *Middleware {
 }
 
 // ReadFrom start a worker to read from this plugin
-func (m *Middleware) ReadFrom(plugin core.PluginReader) {
-	core.Debug(2, fmt.Sprintf("[MIDDLEWARE] command[%q] Starting reading from %q", m.command, plugin))
+func (m *Middleware) ReadFrom(plugin PluginReader) {
+	Debug(2, fmt.Sprintf("[MIDDLEWARE] command[%q] Starting reading from %q", m.command, plugin))
 	go m.copy(m.Stdin, plugin)
 }
 
-func (m *Middleware) copy(to io.Writer, from core.PluginReader) {
+func (m *Middleware) copy(to io.Writer, from PluginReader) {
 	var buf, dst []byte
 
 	for {
@@ -84,8 +83,8 @@ func (m *Middleware) copy(to io.Writer, from core.PluginReader) {
 			continue
 		}
 		buf = msg.Data
-		if core.Settings.PrettifyHTTP {
-			buf = core.PrettifyHTTP(msg.Data)
+		if Settings.PrettifyHTTP {
+			buf = PrettifyHTTP(msg.Data)
 		}
 		dstLen := (len(buf)+len(msg.Meta))*2 + 1
 		// if enough space was previously allocated use it instead
@@ -119,10 +118,10 @@ func (m *Middleware) read(from io.Reader) {
 		}
 		buf := make([]byte, (len(line)-1)/2)
 		if _, err := hex.Decode(buf, line[:len(line)-1]); err != nil {
-			core.Debug(0, fmt.Sprintf("[MIDDLEWARE] command[%q] failed to decode err: %q", m.command, err))
+			Debug(0, fmt.Sprintf("[MIDDLEWARE] command[%q] failed to decode err: %q", m.command, err))
 			continue
 		}
-		var msg core.Message
+		var msg Message
 		msg.Meta, msg.Data = protocol.PayloadMetaWithBody(buf)
 		select {
 		case <-m.stop:
@@ -134,10 +133,10 @@ func (m *Middleware) read(from io.Reader) {
 }
 
 // PluginRead reads message from this plugin
-func (m *Middleware) PluginRead() (msg *core.Message, err error) {
+func (m *Middleware) PluginRead() (msg *Message, err error) {
 	select {
 	case <-m.stop:
-		return nil, core.ErrorStopped
+		return nil, ErrorStopped
 	case msg = <-m.data:
 	}
 

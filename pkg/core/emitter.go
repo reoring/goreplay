@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"github.com/reoring/goreplay/pkg/middleware"
 	"github.com/reoring/goreplay/pkg/pro"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"hash/fnv"
@@ -33,7 +32,7 @@ func (e *Emitter) Start(plugins *InOutPlugins, middlewareCmd string) {
 	e.plugins = plugins
 
 	if middlewareCmd != "" {
-		middleware := middleware.NewMiddleware(middlewareCmd)
+		middleware := NewMiddleware(middlewareCmd)
 
 		for _, in := range plugins.Inputs {
 			middleware.ReadFrom(in)
