@@ -2,7 +2,7 @@ package elasticsearch
 
 import (
 	"encoding/json"
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"net/url"
 	"strings"
@@ -102,7 +102,7 @@ func (p *ESPlugin) Init(URI string) {
 
 	go p.ErrorHandler()
 
-	pkg.Debug(1, "Initialized Elasticsearch Plugin")
+	settings.Debug(1, "Initialized Elasticsearch Plugin")
 	return
 }
 
@@ -114,7 +114,7 @@ func (p *ESPlugin) IndexerShutdown() {
 func (p *ESPlugin) ErrorHandler() {
 	for {
 		errBuf := <-p.indexor.ErrorChannel
-		pkg.Debug(1, "[ELASTICSEARCH]", errBuf.Err)
+		settings.Debug(1, "[ELASTICSEARCH]", errBuf.Err)
 	}
 }
 
@@ -160,7 +160,7 @@ func (p *ESPlugin) ResponseAnalyze(req, resp []byte, start, stop time.Time) {
 	}
 	j, err := json.Marshal(&esResp)
 	if err != nil {
-		pkg.Debug(0, "[ELASTIC-RESPONSE]", err)
+		settings.Debug(0, "[ELASTIC-RESPONSE]", err)
 	} else {
 		p.indexor.Index(p.Index, "RequestResponse", "", "", "", &t, j)
 	}

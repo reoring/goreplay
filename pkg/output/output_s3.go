@@ -3,7 +3,10 @@ package output
 import (
 	_ "bufio"
 	"fmt"
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/pro"
+	s32 "github.com/reoring/goreplay/pkg/s3"
+	"github.com/reoring/goreplay/pkg/settings"
 	_ "io"
 	"log"
 	"math/rand"
@@ -29,7 +32,7 @@ type S3Output struct {
 
 // NewS3Output constructor for FileOutput, accepts path
 func NewS3Output(pathTemplate string, config *FileOutputConfig) *S3Output {
-	if !pkg.PRO {
+	if !pro.PRO {
 		log.Fatal("Using S3 output and input requires PRO license")
 		return nil
 	}
@@ -63,13 +66,13 @@ func NewS3Output(pathTemplate string, config *FileOutputConfig) *S3Output {
 
 func (o *S3Output) connect() {
 	if o.session == nil {
-		o.session = session.Must(session.NewSession(pkg.AwsConfig()))
+		o.session = session.Must(session.NewSession(s32.AwsConfig()))
 		log.Println("[S3 Output] S3 connection successfully initialized")
 	}
 }
 
 // PluginWrite writes message to this plugin
-func (o *S3Output) PluginWrite(msg *pkg.Message) (n int, err error) {
+func (o *S3Output) PluginWrite(msg *plugin.Message) (n int, err error) {
 	return o.buffer.PluginWrite(msg)
 }
 
@@ -111,7 +114,7 @@ func (o *S3Output) onBufferUpdate(path string) {
 
 	file, err := os.Open(path)
 	if err != nil {
-		pkg.Debug(0, fmt.Sprintf("[S3 Output] Failed to open file %q. err: %q", path, err))
+		settings.Debug(0, fmt.Sprintf("[S3 Output] Failed to open file %q. err: %q", path, err))
 		return
 	}
 	defer os.Remove(path)
@@ -122,7 +125,7 @@ func (o *S3Output) onBufferUpdate(path string) {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		pkg.Debug(0, fmt.Sprintf("[S3 Output] Failed to upload data to %q/%q, %q", bucket, key, err))
+		settings.Debug(0, fmt.Sprintf("[S3 Output] Failed to upload data to %q/%q, %q", bucket, key, err))
 		return
 	}
 

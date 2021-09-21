@@ -2,8 +2,10 @@ package output
 
 import (
 	"encoding/json"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/kafka"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"strings"
 	"time"
@@ -25,13 +27,13 @@ type KafkaOutput struct {
 const KafkaOutputFrequency = 500
 
 // NewKafkaOutput creates instance of kafka producer client  with TLS config
-func NewKafkaOutput(address string, config *kafka.OutputKafkaConfig, tlsConfig *kafka.KafkaTLSConfig) pkg.PluginWriter {
+func NewKafkaOutput(address string, config *kafka.OutputKafkaConfig, tlsConfig *kafka.KafkaTLSConfig) plugin.PluginWriter {
 	c := kafka.NewKafkaConfig(tlsConfig)
 
 	var producer sarama.AsyncProducer
 
-	if mock, ok := config.producer.(*mocks.AsyncProducer); ok && mock != nil {
-		producer = config.producer
+	if mock, ok := config.Producer.(*mocks.AsyncProducer); ok && mock != nil {
+		producer = config.Producer
 	} else {
 		c.Producer.RequiredAcks = sarama.WaitForLocal
 		c.Producer.Compression = sarama.CompressionSnappy
@@ -60,12 +62,12 @@ func NewKafkaOutput(address string, config *kafka.OutputKafkaConfig, tlsConfig *
 // ErrorHandler should receive errors
 func (o *KafkaOutput) ErrorHandler() {
 	for err := range o.producer.Errors() {
-		pkg.Debug(1, "Failed to write access log entry:", err)
+		settings.Debug(1, "Failed to write access log entry:", err)
 	}
 }
 
 // PluginWrite writes a message to this plugin
-func (o *KafkaOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
+func (o *KafkaOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
 	var message sarama.StringEncoder
 
 	if !o.config.UseJSON {
@@ -77,7 +79,7 @@ func (o *KafkaOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
 			header[k] = strings.Join(v, ", ")
 		}
 
-		meta := pkg.payloadMeta(msg.Meta)
+		meta := protocol.PayloadMeta(msg.Meta)
 		req := msg.Data
 
 		kafkaMessage := kafka.KafkaMessage{

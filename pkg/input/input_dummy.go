@@ -1,7 +1,8 @@
 package input
 
 import (
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
 	"time"
 )
 
@@ -23,13 +24,13 @@ func NewDummyInput(options string) (di *DummyInput) {
 }
 
 // PluginRead reads message from this plugin
-func (i *DummyInput) PluginRead() (*pkg.Message, error) {
-	var msg pkg.Message
+func (i *DummyInput) PluginRead() (*plugin.Message, error) {
+	var msg plugin.Message
 	select {
 	case <-i.quit:
 		return nil, ErrorStopped
 	case buf := <-i.data:
-		msg.Meta, msg.Data = pkg.payloadMetaWithBody(buf)
+		msg.Meta, msg.Data = protocol.PayloadMetaWithBody(buf)
 		return &msg, nil
 	}
 }
@@ -40,11 +41,11 @@ func (i *DummyInput) emit() {
 	for {
 		select {
 		case <-ticker.C:
-			uuid := pkg.uuid()
-			reqh := pkg.payloadHeader(pkg.RequestPayload, uuid, time.Now().UnixNano(), -1)
+			uuid := protocol.Uuid()
+			reqh := protocol.PayloadHeader(protocol.RequestPayload, uuid, time.Now().UnixNano(), -1)
 			i.data <- append(reqh, []byte("GET / HTTP/1.1\r\nHost: www.w3.org\r\nUser-Agent: Go 1.1 package http\r\nAccept-Encoding: gzip\r\n\r\n")...)
 
-			resh := pkg.payloadHeader(pkg.ResponsePayload, uuid, time.Now().UnixNano()+1, 1)
+			resh := protocol.PayloadHeader(protocol.ResponsePayload, uuid, time.Now().UnixNano()+1, 1)
 			i.data <- append(resh, []byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")...)
 		}
 	}

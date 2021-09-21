@@ -1,8 +1,10 @@
-package pkg
+package plugin
 
 import (
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/limiter"
 	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/settings"
 	"reflect"
 	"strings"
 )
@@ -73,7 +75,7 @@ func (plugins *InOutPlugins) registerPlugin(constructor interface{}, options ...
 	plugin := vc.Call(vo)[0].Interface()
 
 	if limit != "" {
-		plugin = NewLimiter(plugin, limit)
+		plugin = limiter.NewLimiter(plugin, limit)
 	}
 
 	// Some of the output can be Readers as well because return responses
@@ -91,73 +93,73 @@ func (plugins *InOutPlugins) registerPlugin(constructor interface{}, options ...
 func NewPlugins() *InOutPlugins {
 	plugins := new(InOutPlugins)
 
-	for _, options := range Settings.InputDummy {
+	for _, options := range settings.Settings.InputDummy {
 		plugins.registerPlugin(input.NewDummyInput, options)
 	}
 
-	for range Settings.OutputDummy {
+	for range settings.Settings.OutputDummy {
 		plugins.registerPlugin(output.NewDummyOutput)
 	}
 
-	if Settings.OutputStdout {
+	if settings.Settings.OutputStdout {
 		plugins.registerPlugin(output.NewDummyOutput)
 	}
 
-	if Settings.OutputNull {
+	if settings.Settings.OutputNull {
 		plugins.registerPlugin(output.NewNullOutput)
 	}
 
-	for _, options := range Settings.InputRAW {
-		plugins.registerPlugin(input.NewRAWInput, options, Settings.RAWInputConfig)
+	for _, options := range settings.Settings.InputRAW {
+		plugins.registerPlugin(input.NewRAWInput, options, settings.Settings.RAWInputConfig)
 	}
 
-	for _, options := range Settings.InputTCP {
-		plugins.registerPlugin(input.NewTCPInput, options, &Settings.InputTCPConfig)
+	for _, options := range settings.Settings.InputTCP {
+		plugins.registerPlugin(input.NewTCPInput, options, &settings.Settings.InputTCPConfig)
 	}
 
-	for _, options := range Settings.OutputTCP {
-		plugins.registerPlugin(output.NewTCPOutput, options, &Settings.OutputTCPConfig)
+	for _, options := range settings.Settings.OutputTCP {
+		plugins.registerPlugin(output.NewTCPOutput, options, &settings.Settings.OutputTCPConfig)
 	}
 
-	for _, options := range Settings.InputFile {
-		plugins.registerPlugin(input.NewFileInput, options, Settings.InputFileLoop, Settings.InputFileReadDepth, Settings.InputFileMaxWait, Settings.InputFileDryRun)
+	for _, options := range settings.Settings.InputFile {
+		plugins.registerPlugin(input.NewFileInput, options, settings.Settings.InputFileLoop, settings.Settings.InputFileReadDepth, settings.Settings.InputFileMaxWait, settings.Settings.InputFileDryRun)
 	}
 
-	for _, path := range Settings.OutputFile {
+	for _, path := range settings.Settings.OutputFile {
 		if strings.HasPrefix(path, "s3://") {
-			plugins.registerPlugin(output.NewS3Output, path, &Settings.OutputFileConfig)
+			plugins.registerPlugin(output.NewS3Output, path, &settings.Settings.OutputFileConfig)
 		} else {
-			plugins.registerPlugin(output.NewFileOutput, path, &Settings.OutputFileConfig)
+			plugins.registerPlugin(output.NewFileOutput, path, &settings.Settings.OutputFileConfig)
 		}
 	}
 
-	for _, options := range Settings.InputHTTP {
+	for _, options := range settings.Settings.InputHTTP {
 		plugins.registerPlugin(input.NewHTTPInput, options)
 	}
 
 	// If we explicitly set Host header http output should not rewrite it
 	// Fix: https://github.com/reoring/gor/issues/174
-	for _, header := range Settings.ModifierConfig.Headers {
+	for _, header := range settings.Settings.ModifierConfig.Headers {
 		if header.Name == "Host" {
-			Settings.OutputHTTPConfig.OriginalHost = true
+			settings.Settings.OutputHTTPConfig.OriginalHost = true
 			break
 		}
 	}
 
-	for _, options := range Settings.OutputHTTP {
-		plugins.registerPlugin(output.NewHTTPOutput, options, &Settings.OutputHTTPConfig)
+	for _, options := range settings.Settings.OutputHTTP {
+		plugins.registerPlugin(output.NewHTTPOutput, options, &settings.Settings.OutputHTTPConfig)
 	}
 
-	for _, options := range Settings.OutputBinary {
-		plugins.registerPlugin(output.NewBinaryOutput, options, &Settings.OutputBinaryConfig)
+	for _, options := range settings.Settings.OutputBinary {
+		plugins.registerPlugin(output.NewBinaryOutput, options, &settings.Settings.OutputBinaryConfig)
 	}
 
-	if Settings.OutputKafkaConfig.Host != "" && Settings.OutputKafkaConfig.Topic != "" {
-		plugins.registerPlugin(output.NewKafkaOutput, "", &Settings.OutputKafkaConfig, &Settings.KafkaTLSConfig)
+	if settings.Settings.OutputKafkaConfig.Host != "" && settings.Settings.OutputKafkaConfig.Topic != "" {
+		plugins.registerPlugin(output.NewKafkaOutput, "", &settings.Settings.OutputKafkaConfig, &settings.Settings.KafkaTLSConfig)
 	}
 
-	if Settings.InputKafkaConfig.Host != "" && Settings.InputKafkaConfig.Topic != "" {
-		plugins.registerPlugin(input.NewKafkaInput, "", &Settings.InputKafkaConfig, &Settings.KafkaTLSConfig)
+	if settings.Settings.InputKafkaConfig.Host != "" && settings.Settings.InputKafkaConfig.Topic != "" {
+		plugins.registerPlugin(input.NewKafkaInput, "", &settings.Settings.InputKafkaConfig, &settings.Settings.KafkaTLSConfig)
 	}
 
 	return plugins

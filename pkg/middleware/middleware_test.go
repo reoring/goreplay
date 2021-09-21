@@ -1,10 +1,12 @@
-package pkg
+package middleware
 
 import (
 	"bytes"
 	"context"
+	"github.com/reoring/goreplay/pkg/emitter"
 	"github.com/reoring/goreplay/pkg/input"
 	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/plugin"
 	"os"
 	"os/exec"
 	"strings"
@@ -18,9 +20,9 @@ const tokenModifier = "go run ./examples/middleware/token_modifier.go"
 
 var withDebug = append(syscall.Environ(), "GOR_TEST=1")
 
-func initMiddleware(cmd *exec.Cmd, cancl context.CancelFunc, l PluginReader, c func(error)) *Middleware {
+func initMiddleware(cmd *exec.Cmd, cancl context.CancelFunc, l plugin.PluginReader, c func(error)) *Middleware {
 	var m Middleware
-	m.data = make(chan *Message, 1000)
+	m.data = make(chan *plugin.Message, 1000)
 	m.stop = make(chan bool)
 	m.commandCancel = cancl
 	m.Stdout, _ = cmd.StdoutPipe()
@@ -66,7 +68,7 @@ func TestMiddlewareEarlyClose(t *testing.T) {
 	})
 	var body = []byte("OPTIONS / HTTP/1.1\r\nHost: example.org\r\n\r\n")
 	count := uint32(0)
-	out := output.NewTestOutput(func(msg *Message) {
+	out := output.NewTestOutput(func(msg *plugin.Message) {
 		if !bytes.Equal(body, msg.Data) {
 			t.Errorf("expected %q to equal %q", body, msg.Data)
 		}
@@ -75,11 +77,11 @@ func TestMiddlewareEarlyClose(t *testing.T) {
 			quit <- struct{}{}
 		}
 	})
-	pl := &InOutPlugins{}
-	pl.Inputs = []PluginReader{midd, in}
-	pl.Outputs = []PluginWriter{out}
+	pl := &plugin.InOutPlugins{}
+	pl.Inputs = []plugin.PluginReader{midd, in}
+	pl.Outputs = []plugin.PluginWriter{out}
 	pl.All = []interface{}{midd, out, in}
-	e := NewEmitter()
+	e := emitter.NewEmitter()
 	go e.Start(pl, "")
 	for i := 0; i < 5; i++ {
 		in.EmitBytes(body)

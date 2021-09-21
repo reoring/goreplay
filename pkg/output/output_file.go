@@ -5,8 +5,10 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"log"
 	"math/rand"
@@ -213,10 +215,10 @@ func (o *FileOutput) updateName() {
 }
 
 // PluginWrite writes message to this plugin
-func (o *FileOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
+func (o *FileOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
 	if o.requestPerFile {
 		o.Lock()
-		meta := pkg.payloadMeta(msg.Meta)
+		meta := protocol.PayloadMeta(msg.Meta)
 		o.currentID = meta[1]
 		o.payloadType = meta[0]
 		o.Unlock()
@@ -249,14 +251,14 @@ func (o *FileOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
 	n, err = o.writer.Write(msg.Meta)
 	nn, err = o.writer.Write(msg.Data)
 	n += nn
-	nn, err = o.writer.Write(input.payloadSeparatorAsBytes)
+	nn, err = o.writer.Write(input.PayloadSeparatorAsBytes)
 	n += nn
 
 	o.totalFileSize += size.Size(n)
 	o.currentFileSize += n
 	o.QueueLength++
 
-	if pkg.Settings.OutputFileConfig.OutputFileMaxSize > 0 && o.totalFileSize >= pkg.Settings.OutputFileConfig.OutputFileMaxSize {
+	if settings.Settings.OutputFileConfig.OutputFileMaxSize > 0 && o.totalFileSize >= settings.Settings.OutputFileConfig.OutputFileMaxSize {
 		return n, errors.New("File output reached size limit")
 	}
 
@@ -267,7 +269,7 @@ func (o *FileOutput) flush() {
 	// Don't exit on panic
 	defer func() {
 		if r := recover(); r != nil {
-			pkg.Debug(0, "[OUTPUT-FILE] PANIC while file flush: ", r, o, string(debug.Stack()))
+			settings.Debug(0, "[OUTPUT-FILE] PANIC while file flush: ", r, o, string(debug.Stack()))
 		}
 	}()
 
@@ -284,7 +286,7 @@ func (o *FileOutput) flush() {
 		if stat, err := o.file.Stat(); err == nil {
 			o.currentFileSize = int(stat.Size())
 		} else {
-			pkg.Debug(0, "[OUTPUT-HTTP] error accessing file size", err)
+			settings.Debug(0, "[OUTPUT-HTTP] error accessing file size", err)
 		}
 	}
 }

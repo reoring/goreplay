@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/reoring/goreplay"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
+	"github.com/reoring/goreplay/pkg/stat"
 	"hash/fnv"
 	"net"
 	"time"
@@ -18,8 +20,8 @@ import (
 type TCPOutput struct {
 	address     string
 	limit       int
-	buf         []chan *pkg.Message
-	bufStats    *main.GorStat
+	buf         []chan *plugin.Message
+	bufStats    *stat.GorStat
 	config      *TCPOutputConfig
 	workerIndex uint32
 
@@ -36,20 +38,20 @@ type TCPOutputConfig struct {
 
 // NewTCPOutput constructor for TCPOutput
 // Initialize X workers which hold keep-alive connection
-func NewTCPOutput(address string, config *TCPOutputConfig) pkg.PluginWriter {
+func NewTCPOutput(address string, config *TCPOutputConfig) plugin.PluginWriter {
 	o := new(TCPOutput)
 
 	o.address = address
 	o.config = config
 
-	if pkg.Settings.OutputTCPStats {
-		o.bufStats = main.NewGorStat("output_tcp", 5000)
+	if settings.Settings.OutputTCPStats {
+		o.bufStats = stat.NewGorStat("output_tcp", 5000)
 	}
 
 	// create X buffers and send the buffer index to the worker
-	o.buf = make([]chan *pkg.Message, o.config.Workers)
+	o.buf = make([]chan *plugin.Message, o.config.Workers)
 	for i := 0; i < o.config.Workers; i++ {
-		o.buf[i] = make(chan *pkg.Message, 100)
+		o.buf[i] = make(chan *plugin.Message, 100)
 		go o.worker(i)
 	}
 
@@ -68,7 +70,7 @@ func (o *TCPOutput) worker(bufferIndex int) {
 			break
 		}
 
-		pkg.Debug(1, fmt.Sprintf("Can't connect to aggregator instance, reconnecting in 1 second. Retries:%d", retries))
+		settings.Debug(1, fmt.Sprintf("Can't connect to aggregator instance, reconnecting in 1 second. Retries:%d", retries))
 		time.Sleep(1 * time.Second)
 
 		conn, err = o.connect(o.address)
@@ -76,7 +78,7 @@ func (o *TCPOutput) worker(bufferIndex int) {
 	}
 
 	if retries > 0 {
-		pkg.Debug(2, fmt.Sprintf("Connected to aggregator instance after %d retries", retries))
+		settings.Debug(2, fmt.Sprintf("Connected to aggregator instance after %d retries", retries))
 	}
 
 	defer conn.Close()
@@ -85,12 +87,12 @@ func (o *TCPOutput) worker(bufferIndex int) {
 		msg := <-o.buf[bufferIndex]
 		if _, err = conn.Write(msg.Meta); err == nil {
 			if _, err = conn.Write(msg.Data); err == nil {
-				_, err = conn.Write(input.payloadSeparatorAsBytes)
+				_, err = conn.Write(input.PayloadSeparatorAsBytes)
 			}
 		}
 
 		if err != nil {
-			pkg.Debug(2, "INFO: TCP output connection closed, reconnecting")
+			settings.Debug(2, "INFO: TCP output connection closed, reconnecting")
 			o.buf[bufferIndex] <- msg
 			go o.worker(bufferIndex)
 			break
@@ -98,27 +100,27 @@ func (o *TCPOutput) worker(bufferIndex int) {
 	}
 }
 
-func (o *TCPOutput) getBufferIndex(msg *pkg.Message) int {
+func (o *TCPOutput) getBufferIndex(msg *plugin.Message) int {
 	if !o.config.Sticky {
 		o.workerIndex++
 		return int(o.workerIndex) % o.config.Workers
 	}
 
 	hasher := fnv.New32a()
-	hasher.Write(pkg.payloadID(msg.Meta))
+	hasher.Write(protocol.PayloadID(msg.Meta))
 	return int(hasher.Sum32()) % o.config.Workers
 }
 
 // PluginWrite writes message to this plugin
-func (o *TCPOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
-	if !pkg.isOriginPayload(msg.Meta) {
+func (o *TCPOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
+	if !protocol.IsOriginPayload(msg.Meta) {
 		return len(msg.Data), nil
 	}
 
 	bufferIndex := o.getBufferIndex(msg)
 	o.buf[bufferIndex] <- msg
 
-	if pkg.Settings.OutputTCPStats {
+	if settings.Settings.OutputTCPStats {
 		o.bufStats.Write(len(o.buf[bufferIndex]))
 	}
 

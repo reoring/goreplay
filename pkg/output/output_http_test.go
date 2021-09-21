@@ -2,8 +2,11 @@ package output
 
 import (
 	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/emitter"
 	http2 "github.com/reoring/goreplay/pkg/http"
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -41,21 +44,21 @@ func TestHTTPOutput(t *testing.T) {
 
 	headers := http2.HTTPHeaders{http2.httpHeader{"User-Agent", "Gor"}}
 	methods := http2.HTTPMethods{[]byte("GET"), []byte("PUT"), []byte("POST")}
-	pkg.Settings.ModifierConfig = http2.HTTPModifierConfig{Headers: headers, Methods: methods}
+	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{Headers: headers, Methods: methods}
 
 	httpOutput := NewHTTPOutput(server.URL, &HTTPOutputConfig{TrackResponses: false})
-	output := NewTestOutput(func(*pkg.Message) {
+	output := NewTestOutput(func(*plugin.Message) {
 		wg.Done()
 	})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{httpOutput, output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{httpOutput, output},
 	}
 	plugins.All = append(plugins.All, input, output, httpOutput)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	for i := 0; i < 10; i++ {
 		// 2 http-output, 2 - test output request
@@ -68,7 +71,7 @@ func TestHTTPOutput(t *testing.T) {
 	wg.Wait()
 	emitter.Close()
 
-	pkg.Settings.ModifierConfig = http2.HTTPModifierConfig{}
+	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{}
 }
 
 func TestHTTPOutputKeepOriginalHost(t *testing.T) {
@@ -86,25 +89,25 @@ func TestHTTPOutputKeepOriginalHost(t *testing.T) {
 	defer server.Close()
 
 	headers := http2.HTTPHeaders{http2.httpHeader{"Host", "custom-host.com"}}
-	pkg.Settings.ModifierConfig = http2.HTTPModifierConfig{Headers: headers}
+	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{Headers: headers}
 
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{OriginalHost: true, SkipVerify: true})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	wg.Add(1)
 	input.EmitGET()
 
 	wg.Wait()
 	emitter.Close()
-	pkg.Settings.ModifierConfig = http2.HTTPModifierConfig{}
+	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{}
 }
 
 func TestHTTPOutputSSL(t *testing.T) {
@@ -118,14 +121,14 @@ func TestHTTPOutputSSL(t *testing.T) {
 	input := input.NewTestInput()
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{SkipVerify: true})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	wg.Add(2)
 
@@ -147,17 +150,17 @@ func TestHTTPOutputSessions(t *testing.T) {
 	}))
 	defer server.Close()
 
-	pkg.Settings.RecognizeTCPSessions = true
-	pkg.Settings.SplitOutput = true
+	settings.Settings.RecognizeTCPSessions = true
+	settings.Settings.SplitOutput = true
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	uuid1 := []byte("1234567890123456789a0000")
 	uuid2 := []byte("1234567890123456789d0000")
@@ -178,8 +181,8 @@ func TestHTTPOutputSessions(t *testing.T) {
 
 	emitter.Close()
 
-	pkg.Settings.RecognizeTCPSessions = false
-	pkg.Settings.SplitOutput = false
+	settings.Settings.RecognizeTCPSessions = false
+	settings.Settings.SplitOutput = false
 }
 
 func BenchmarkHTTPOutput(b *testing.B) {
@@ -193,14 +196,14 @@ func BenchmarkHTTPOutput(b *testing.B) {
 	input := input.NewTestInput()
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{WorkersMax: 1})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)
@@ -222,14 +225,14 @@ func BenchmarkHTTPOutputTLS(b *testing.B) {
 	input := input.NewTestInput()
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{SkipVerify: true, WorkersMax: 1})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)

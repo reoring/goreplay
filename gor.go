@@ -7,6 +7,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/emitter"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/settings"
+	"github.com/reoring/goreplay/pkg/version"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -72,23 +76,23 @@ func main() {
 	}
 
 	args := os.Args[1:]
-	var plugins *pkg.InOutPlugins
+	var plugins *plugin.InOutPlugins
 	if len(args) > 0 && args[0] == "file-server" {
 		if len(args) != 2 {
 			log.Fatal("You should specify port and IP (optional) for the file server. Example: `gor file-server :80`")
 		}
 		dir, _ := os.Getwd()
 
-		pkg.Debug(0, "Started example file server for current directory on address ", args[1])
+		settings.Debug(0, "Started example file server for current directory on address ", args[1])
 
 		log.Fatal(http.ListenAndServe(args[1], loggingMiddleware(args[1], http.FileServer(http.Dir(dir)))))
 	} else {
 		flag.Parse()
 		pkg.checkSettings()
-		plugins = pkg.NewPlugins()
+		plugins = plugin.NewPlugins()
 	}
 
-	log.Printf("[PPID %d and PID %d] Version:%s\n", os.Getppid(), os.Getpid(), pkg.VERSION)
+	log.Printf("[PPID %d and PID %d] Version:%s\n", os.Getppid(), os.Getpid(), version.VERSION)
 
 	if len(plugins.Inputs) == 0 || len(plugins.Outputs) == 0 {
 		log.Fatal("Required at least 1 input and 1 output")
@@ -102,20 +106,20 @@ func main() {
 		profileCPU(*cpuprofile)
 	}
 
-	if pkg.Settings.Pprof != "" {
+	if settings.Settings.Pprof != "" {
 		go func() {
-			log.Println(http.ListenAndServe(pkg.Settings.Pprof, nil))
+			log.Println(http.ListenAndServe(settings.Settings.Pprof, nil))
 		}()
 	}
 
 	closeCh := make(chan int)
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
-	if pkg.Settings.ExitAfter > 0 {
-		log.Printf("Running gor for a duration of %s\n", pkg.Settings.ExitAfter)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
+	if settings.Settings.ExitAfter > 0 {
+		log.Printf("Running gor for a duration of %s\n", settings.Settings.ExitAfter)
 
-		time.AfterFunc(pkg.Settings.ExitAfter, func() {
-			log.Printf("gor run timeout %s\n", pkg.Settings.ExitAfter)
+		time.AfterFunc(settings.Settings.ExitAfter, func() {
+			log.Printf("gor run timeout %s\n", settings.Settings.ExitAfter)
 			close(closeCh)
 		})
 	}

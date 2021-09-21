@@ -1,7 +1,9 @@
-package pkg
+package tcp
 
 import (
 	"crypto/tls"
+	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"net"
 	"runtime/debug"
@@ -70,7 +72,7 @@ func (c *TCPClient) Disconnect() {
 	if c.conn != nil {
 		c.conn.Close()
 		c.conn = nil
-		Debug(1, "[TCPClient] Disconnected: ", c.baseURL)
+		settings.Debug(1, "[TCPClient] Disconnected: ", c.baseURL)
 	}
 }
 
@@ -84,10 +86,10 @@ func (c *TCPClient) isAlive() bool {
 	if err == nil {
 		return true
 	} else if err == io.EOF {
-		Debug(1, "[TCPClient] connection closed, reconnecting")
+		settings.Debug(1, "[TCPClient] connection closed, reconnecting")
 		return false
 	} else if err == syscall.EPIPE {
-		Debug(1, "Detected broken pipe.", err)
+		settings.Debug(1, "Detected broken pipe.", err)
 		return false
 	}
 
@@ -99,19 +101,19 @@ func (c *TCPClient) Send(data []byte) (response []byte, err error) {
 	// Don't exit on panic
 	defer func() {
 		if r := recover(); r != nil {
-			Debug(1, "[TCPClient]", r, string(data))
+			settings.Debug(1, "[TCPClient]", r, string(data))
 
 			if _, ok := r.(error); !ok {
-				Debug(1, "[TCPClient] Failed to send request: ", string(data))
-				Debug(1, "PANIC: pkg:", r, debug.Stack())
+				settings.Debug(1, "[TCPClient] Failed to send request: ", string(data))
+				settings.Debug(1, "PANIC: pkg:", r, debug.Stack())
 			}
 		}
 	}()
 
 	if c.conn == nil || !c.isAlive() {
-		Debug(1, "[TCPClient] Connecting:", c.baseURL)
+		settings.Debug(1, "[TCPClient] Connecting:", c.baseURL)
 		if err = c.Connect(); err != nil {
-			Debug(1, "[TCPClient] Connection error:", err)
+			settings.Debug(1, "[TCPClient] Connection error:", err)
 			return
 		}
 	}
@@ -121,11 +123,11 @@ func (c *TCPClient) Send(data []byte) (response []byte, err error) {
 	c.conn.SetWriteDeadline(timeout)
 
 	if c.config.Debug {
-		Debug(1, "[TCPClient] Sending:", string(data))
+		settings.Debug(1, "[TCPClient] Sending:", string(data))
 	}
 
 	if _, err = c.conn.Write(data); err != nil {
-		Debug(1, "[TCPClient] Write error:", err, c.baseURL)
+		settings.Debug(1, "[TCPClient] Write error:", err, c.baseURL)
 		return
 	}
 
@@ -148,7 +150,7 @@ func (c *TCPClient) Send(data []byte) (response []byte, err error) {
 			}
 		} else {
 			if currentChunk == nil {
-				currentChunk = make([]byte, main.readChunkSize)
+				currentChunk = make([]byte, output.ReadChunkSize)
 			}
 
 			n, err = c.conn.Read(currentChunk)
@@ -156,15 +158,15 @@ func (c *TCPClient) Send(data []byte) (response []byte, err error) {
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				Debug(1, "[TCPClient] Read the whole body error:", err, c.baseURL)
+				settings.Debug(1, "[TCPClient] Read the whole body error:", err, c.baseURL)
 				break
 			}
 
 			readBytes += int(n)
 		}
 
-		if readBytes >= main.maxResponseSize {
-			Debug(1, "[TCPClient] Body is more than the max size", main.maxResponseSize,
+		if readBytes >= output.MaxResponseSize {
+			settings.Debug(1, "[TCPClient] Body is more than the max size", output.MaxResponseSize,
 				c.baseURL)
 			break
 		}
@@ -174,7 +176,7 @@ func (c *TCPClient) Send(data []byte) (response []byte, err error) {
 	}
 
 	if err != nil {
-		Debug(1, "[TCPClient] Response read error", err, c.conn, readBytes)
+		settings.Debug(1, "[TCPClient] Response read error", err, c.conn, readBytes)
 		return
 	}
 
@@ -186,7 +188,7 @@ func (c *TCPClient) Send(data []byte) (response []byte, err error) {
 	copy(payload, c.respBuf[:readBytes])
 
 	if c.config.Debug {
-		Debug(1, "[TCPClient] Received:", string(payload))
+		settings.Debug(1, "[TCPClient] Received:", string(payload))
 	}
 
 	return payload, err

@@ -2,8 +2,11 @@ package output
 
 import (
 	"bufio"
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/emitter"
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"net"
 	"sync"
@@ -20,13 +23,13 @@ func TestTCPOutput(t *testing.T) {
 	input := input.NewTestInput()
 	output := NewTCPOutput(listener.Addr().String(), &TCPOutputConfig{Workers: 10})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
@@ -52,7 +55,7 @@ func startTCP(cb func([]byte)) net.Listener {
 				defer conn.Close()
 				reader := bufio.NewReader(conn)
 				scanner := bufio.NewScanner(reader)
-				scanner.Split(pkg.payloadScanner)
+				scanner.Split(protocol.PayloadScanner)
 
 				for scanner.Scan() {
 					cb(scanner.Bytes())
@@ -78,15 +81,15 @@ func BenchmarkTCPOutput(b *testing.B) {
 	wg.Add(b.N)
 	output := NewTCPOutput(listener.Addr().String(), &TCPOutputConfig{Workers: 10})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 
-	emitter := pkg.NewEmitter()
+	emitter := emitter.NewEmitter()
 	// avoid counting above initialization
 	b.ResetTimer()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	wg.Wait()
 	emitter.Close()
@@ -127,9 +130,9 @@ func TestBufferDistribution(t *testing.T) {
 	}
 }
 
-func getTestBytes() *pkg.Message {
-	return &pkg.Message{
-		Meta: pkg.payloadHeader(pkg.RequestPayload, pkg.uuid(), time.Now().UnixNano(), -1),
+func getTestBytes() *plugin.Message {
+	return &plugin.Message{
+		Meta: protocol.PayloadHeader(protocol.RequestPayload, protocol.Uuid(), time.Now().UnixNano(), -1),
 		Data: []byte("GET / HTTP/1.1\r\nHost: www.w3.org\r\nUser-Agent: Go 1.1 package http\r\nAccept-Encoding: gzip\r\n\r\n"),
 	}
 }

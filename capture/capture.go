@@ -173,7 +173,7 @@ func NewListener(host string, ports []uint16, transport string, engine EngineTyp
 }
 
 // SetPcapOptions set pcap options for all yet to be actived pcap handles
-// setting this on already activated handles will not have any effect
+// settings this on already activated handles will not have any effect
 func (l *Listener) SetPcapOptions(opts PcapOptions) {
 	l.PcapOptions = opts
 }
@@ -240,7 +240,7 @@ func (l *Listener) Filter(ifi pcap.Interface) (filter string) {
 }
 
 // PcapHandle returns new pcap Handle from dev on success.
-// this function should be called after setting all necessary options for this listener
+// this function should be called after settings all necessary options for this listener
 func (l *Listener) PcapHandle(ifi pcap.Interface) (handle *pcap.Handle, err error) {
 	var inactive *pcap.InactiveHandle
 	inactive, err = pcap.NewInactiveHandle(ifi.Name)

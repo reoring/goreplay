@@ -1,9 +1,12 @@
 package output
 
 import (
-	"github.com/reoring/goreplay"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
+	"github.com/reoring/goreplay/pkg/stat"
+	"github.com/reoring/goreplay/pkg/tcp"
 	"sync/atomic"
 	"time"
 
@@ -28,23 +31,23 @@ type BinaryOutput struct {
 	// aligned at 64bit. See https://github.com/golang/go/issues/599
 	activeWorkers int64
 	address       string
-	queue         chan *pkg.Message
+	queue         chan *plugin.Message
 	responses     chan response
 	needWorker    chan int
 	quit          chan struct{}
 	config        *BinaryOutputConfig
-	queueStats    *main.GorStat
+	queueStats    *stat.GorStat
 }
 
 // NewBinaryOutput constructor for BinaryOutput
 // Initialize workers
-func NewBinaryOutput(address string, config *BinaryOutputConfig) pkg.PluginReadWriter {
+func NewBinaryOutput(address string, config *BinaryOutputConfig) plugin.PluginReadWriter {
 	o := new(BinaryOutput)
 
 	o.address = address
 	o.config = config
 
-	o.queue = make(chan *pkg.Message, 1000)
+	o.queue = make(chan *plugin.Message, 1000)
 	o.responses = make(chan response, 1000)
 	o.needWorker = make(chan int, 1)
 	o.quit = make(chan struct{})
@@ -76,7 +79,7 @@ func (o *BinaryOutput) workerMaster() {
 }
 
 func (o *BinaryOutput) startWorker() {
-	client := pkg.NewTCPClient(o.address, &pkg.TCPClientConfig{
+	client := tcp.NewTCPClient(o.address, &tcp.TCPClientConfig{
 		Debug:              o.config.Debug,
 		Timeout:            o.config.Timeout,
 		ResponseBufferSize: int(o.config.BufferSize),
@@ -113,8 +116,8 @@ func (o *BinaryOutput) startWorker() {
 }
 
 // PluginWrite writes a message tothis plugin
-func (o *BinaryOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
-	if !pkg.isRequestPayload(msg.Meta) {
+func (o *BinaryOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
+	if !protocol.IsRequestPayload(msg.Meta) {
 		return len(msg.Data), nil
 	}
 
@@ -132,33 +135,33 @@ func (o *BinaryOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
 }
 
 // PluginRead reads a message from this plugin
-func (o *BinaryOutput) PluginRead() (*pkg.Message, error) {
+func (o *BinaryOutput) PluginRead() (*plugin.Message, error) {
 	var resp response
-	var msg pkg.Message
+	var msg plugin.Message
 	select {
 	case <-o.quit:
 		return nil, input.ErrorStopped
 	case resp = <-o.responses:
 	}
 	msg.Data = resp.payload
-	msg.Meta = pkg.payloadHeader(pkg.ReplayedResponsePayload, resp.uuid, resp.startedAt, resp.roundTripTime)
+	msg.Meta = protocol.PayloadHeader(protocol.ReplayedResponsePayload, resp.uuid, resp.startedAt, resp.roundTripTime)
 
 	return &msg, nil
 }
 
-func (o *BinaryOutput) sendRequest(client *pkg.TCPClient, msg *pkg.Message) {
-	if !pkg.isRequestPayload(msg.Meta) {
+func (o *BinaryOutput) sendRequest(client *tcp.TCPClient, msg *plugin.Message) {
+	if !protocol.IsRequestPayload(msg.Meta) {
 		return
 	}
 
-	uuid := pkg.payloadID(msg.Meta)
+	uuid := protocol.PayloadID(msg.Meta)
 
 	start := time.Now()
 	resp, err := client.Send(msg.Data)
 	stop := time.Now()
 
 	if err != nil {
-		pkg.Debug(1, "Request error:", err)
+		settings.Debug(1, "Request error:", err)
 	}
 
 	if o.config.TrackResponses {

@@ -1,9 +1,14 @@
-package pkg
+package emitter
 
 import (
 	"fmt"
 	"github.com/reoring/goreplay/pkg/http"
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/middleware"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/pro"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
 	"hash/fnv"
 	"io"
 	"log"
@@ -16,7 +21,7 @@ import (
 // Emitter represents an abject to manage plugins communication
 type Emitter struct {
 	sync.WaitGroup
-	plugins *InOutPlugins
+	plugins *plugin.InOutPlugins
 }
 
 // NewEmitter creates and initializes new Emitter object.
@@ -25,14 +30,14 @@ func NewEmitter() *Emitter {
 }
 
 // Start initialize loop for sending data from inputs to outputs
-func (e *Emitter) Start(plugins *InOutPlugins, middlewareCmd string) {
-	if Settings.CopyBufferSize < 1 {
-		Settings.CopyBufferSize = 5 << 20
+func (e *Emitter) Start(plugins *plugin.InOutPlugins, middlewareCmd string) {
+	if settings.Settings.CopyBufferSize < 1 {
+		settings.Settings.CopyBufferSize = 5 << 20
 	}
 	e.plugins = plugins
 
 	if middlewareCmd != "" {
-		middleware := NewMiddleware(middlewareCmd)
+		middleware := middleware.NewMiddleware(middlewareCmd)
 
 		for _, in := range plugins.Inputs {
 			middleware.ReadFrom(in)
@@ -44,16 +49,16 @@ func (e *Emitter) Start(plugins *InOutPlugins, middlewareCmd string) {
 		go func() {
 			defer e.Done()
 			if err := CopyMulty(middleware, plugins.Outputs...); err != nil {
-				Debug(2, fmt.Sprintf("[EMITTER] error during copy: %q", err))
+				settings.Debug(2, fmt.Sprintf("[EMITTER] error during copy: %q", err))
 			}
 		}()
 	} else {
 		for _, in := range plugins.Inputs {
 			e.Add(1)
-			go func(in PluginReader) {
+			go func(in plugin.PluginReader) {
 				defer e.Done()
 				if err := CopyMulty(in, plugins.Outputs...); err != nil {
-					Debug(2, fmt.Sprintf("[EMITTER] error during copy: %q", err))
+					settings.Debug(2, fmt.Sprintf("[EMITTER] error during copy: %q", err))
 				}
 			}(in)
 		}
@@ -75,9 +80,9 @@ func (e *Emitter) Close() {
 }
 
 // CopyMulty copies from 1 reader to multiple writers
-func CopyMulty(src PluginReader, writers ...PluginWriter) error {
+func CopyMulty(src plugin.PluginReader, writers ...plugin.PluginWriter) error {
 	wIndex := 0
-	modifier := http.NewHTTPModifier(&Settings.ModifierConfig)
+	modifier := http.NewHTTPModifier(&settings.Settings.ModifierConfig)
 	filteredRequests := make(map[string]int64)
 	filteredRequestsLastCleanTime := time.Now().UnixNano()
 	filteredCount := 0
@@ -91,22 +96,22 @@ func CopyMulty(src PluginReader, writers ...PluginWriter) error {
 			return err
 		}
 		if msg != nil && len(msg.Data) > 0 {
-			if len(msg.Data) > int(Settings.CopyBufferSize) {
-				msg.Data = msg.Data[:Settings.CopyBufferSize]
+			if len(msg.Data) > int(settings.Settings.CopyBufferSize) {
+				msg.Data = msg.Data[:settings.Settings.CopyBufferSize]
 			}
-			meta := PayloadMeta(msg.Meta)
+			meta := protocol.PayloadMeta(msg.Meta)
 			if len(meta) < 3 {
-				Debug(2, fmt.Sprintf("[EMITTER] Found malformed record %q from %q", msg.Meta, src))
+				settings.Debug(2, fmt.Sprintf("[EMITTER] Found malformed record %q from %q", msg.Meta, src))
 				continue
 			}
 			requestID := byteutils.SliceToString(meta[1])
 			// start a subroutine only when necessary
-			if Settings.Verbose >= 3 {
-				Debug(3, "[EMITTER] input: ", byteutils.SliceToString(msg.Meta[:len(msg.Meta)-1]), " from: ", src)
+			if settings.Settings.Verbose >= 3 {
+				settings.Debug(3, "[EMITTER] input: ", byteutils.SliceToString(msg.Meta[:len(msg.Meta)-1]), " from: ", src)
 			}
 			if modifier != nil {
-				Debug(3, "[EMITTER] modifier:", requestID, "from:", src)
-				if IsRequestPayload(msg.Meta) {
+				settings.Debug(3, "[EMITTER] modifier:", requestID, "from:", src)
+				if protocol.IsRequestPayload(msg.Meta) {
 					msg.Data = modifier.Rewrite(msg.Data)
 					// If modifier tells to skip request
 					if len(msg.Data) == 0 {
@@ -114,7 +119,7 @@ func CopyMulty(src PluginReader, writers ...PluginWriter) error {
 						filteredCount++
 						continue
 					}
-					Debug(3, "[EMITTER] Rewritten input:", requestID, "from:", src)
+					settings.Debug(3, "[EMITTER] Rewritten input:", requestID, "from:", src)
 
 				} else {
 					if _, ok := filteredRequests[requestID]; ok {
@@ -125,16 +130,16 @@ func CopyMulty(src PluginReader, writers ...PluginWriter) error {
 				}
 			}
 
-			if Settings.PrettifyHTTP {
+			if settings.Settings.PrettifyHTTP {
 				msg.Data = http.PrettifyHTTP(msg.Data)
 				if len(msg.Data) == 0 {
 					continue
 				}
 			}
 
-			if Settings.SplitOutput {
-				if Settings.RecognizeTCPSessions {
-					if !PRO {
+			if settings.Settings.SplitOutput {
+				if settings.Settings.RecognizeTCPSessions {
+					if !pro.PRO {
 						log.Fatal("Detailed TCP sessions work only with PRO license")
 					}
 					hasher := fnv.New32a()

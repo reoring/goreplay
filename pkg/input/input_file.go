@@ -8,8 +8,11 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	s32 "github.com/reoring/goreplay/pkg/s3"
+	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"math"
 	"os"
@@ -68,7 +71,7 @@ type fileInputReader struct {
 }
 
 func (f *fileInputReader) parse(init chan struct{}) error {
-	payloadSeparatorAsBytes := []byte(pkg.PayloadSeparator)
+	payloadSeparatorAsBytes := []byte(protocol.PayloadSeparator)
 	var buffer bytes.Buffer
 	var initialized bool
 
@@ -77,7 +80,7 @@ func (f *fileInputReader) parse(init chan struct{}) error {
 
 		if err != nil {
 			if err != io.EOF {
-				pkg.Debug(1, err)
+				settings.Debug(1, err)
 			}
 
 			f.Close()
@@ -92,7 +95,7 @@ func (f *fileInputReader) parse(init chan struct{}) error {
 
 		if bytes.Equal(payloadSeparatorAsBytes[1:], line) {
 			asBytes := buffer.Bytes()
-			meta := pkg.PayloadMeta(asBytes)
+			meta := protocol.PayloadMeta(asBytes)
 
 			timestamp, _ := strconv.ParseInt(string(meta[2]), 10, 64)
 			data := asBytes[:len(asBytes)-1]
@@ -156,13 +159,13 @@ func newFileInputReader(path string, readDepth int) *fileInputReader {
 	var err error
 
 	if strings.HasPrefix(path, "s3://") {
-		file = pkg.NewS3ReadCloser(path)
+		file = s32.NewS3ReadCloser(path)
 	} else {
 		file, err = os.Open(path)
 	}
 
 	if err != nil {
-		pkg.Debug(0, fmt.Sprintf("[INPUT-FILE] err: %q", err))
+		settings.Debug(0, fmt.Sprintf("[INPUT-FILE] err: %q", err))
 		return nil
 	}
 
@@ -170,7 +173,7 @@ func newFileInputReader(path string, readDepth int) *fileInputReader {
 	if strings.HasSuffix(path, ".gz") {
 		gzReader, err := gzip.NewReader(file)
 		if err != nil {
-			pkg.Debug(0, fmt.Sprintf("[INPUT-FILE] err: %q", err))
+			settings.Debug(0, fmt.Sprintf("[INPUT-FILE] err: %q", err))
 			return nil
 		}
 		r.reader = bufio.NewReader(gzReader)
@@ -232,7 +235,7 @@ func (i *FileInput) init() (err error) {
 	var matches []string
 
 	if strings.HasPrefix(i.path, "s3://") {
-		sess := session.Must(session.NewSession(pkg.AwsConfig()))
+		sess := session.Must(session.NewSession(s32.AwsConfig()))
 		svc := s3.New(sess)
 
 		bucket, key := output.ParseS3Url(i.path)
@@ -244,7 +247,7 @@ func (i *FileInput) init() (err error) {
 
 		resp, err := svc.ListObjects(params)
 		if err != nil {
-			pkg.Debug(2, "[INPUT-FILE] Error while retrieving list of files from S3", i.path, err)
+			settings.Debug(2, "[INPUT-FILE] Error while retrieving list of files from S3", i.path, err)
 			return err
 		}
 
@@ -252,12 +255,12 @@ func (i *FileInput) init() (err error) {
 			matches = append(matches, "s3://"+bucket+"/"+(*c.Key))
 		}
 	} else if matches, err = filepath.Glob(i.path); err != nil {
-		pkg.Debug(2, "[INPUT-FILE] Wrong file pattern", i.path, err)
+		settings.Debug(2, "[INPUT-FILE] Wrong file pattern", i.path, err)
 		return
 	}
 
 	if len(matches) == 0 {
-		pkg.Debug(2, "[INPUT-FILE] No files match pattern: ", i.path)
+		settings.Debug(2, "[INPUT-FILE] No files match pattern: ", i.path)
 		return errors.New("no matching files")
 	}
 
@@ -277,14 +280,14 @@ func (i *FileInput) SetSpeedFactor(speedFactor float64) {
 }
 
 // PluginRead reads message from this plugin
-func (i *FileInput) PluginRead() (*pkg.Message, error) {
-	var msg pkg.Message
+func (i *FileInput) PluginRead() (*plugin.Message, error) {
+	var msg plugin.Message
 	select {
 	case <-i.exit:
 		return nil, ErrorStopped
 	case buf := <-i.data:
 		i.stats.Add("read_from", 1)
-		msg.Meta, msg.Data = pkg.PayloadMetaWithBody(buf)
+		msg.Meta, msg.Data = protocol.PayloadMetaWithBody(buf)
 		return &msg, nil
 	}
 }
@@ -401,7 +404,7 @@ func (i *FileInput) emit() {
 	i.stats.Set("max_wait", time.Duration(maxWait))
 	i.stats.Set("min_wait", time.Duration(minWait))
 
-	pkg.Debug(2, fmt.Sprintf("[INPUT-FILE] FileInput: end of file '%s'\n", i.path))
+	settings.Debug(2, fmt.Sprintf("[INPUT-FILE] FileInput: end of file '%s'\n", i.path))
 
 	if i.dryRun {
 		fmt.Printf("Records found: %v\nFiles processed: %v\nBytes processed: %v\nMax wait: %v\nMin wait: %v\nFirst wait: %v\nIt will take `%v` to replay at current speed.\nFound %v records with out of order timestamp\n",

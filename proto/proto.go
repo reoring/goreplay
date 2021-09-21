@@ -288,7 +288,7 @@ func SetPathParam(payload, name, value []byte) []byte {
 // SetHost updates Host header for HTTP/1.1 or updates host in path for HTTP/1.0 or Proxy requests
 // Returns modified payload
 func SetHost(payload, url, host []byte) []byte {
-	// If this is HTTP 1.0 traffic or proxy traffic it may include host right into path variable, so instead of setting Host header we rewrite Path
+	// If this is HTTP 1.0 traffic or proxy traffic it may include host right into path variable, so instead of settings Host header we rewrite Path
 	// Fix for https://github.com/reoring/gor/issues/156
 	if path := Path(payload); bytes.HasPrefix(path, []byte("http")) {
 		hostStart := bytes.IndexByte(path, ':') // : position "https?:"

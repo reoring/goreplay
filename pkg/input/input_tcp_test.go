@@ -8,7 +8,10 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/emitter"
 	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -23,18 +26,18 @@ func TestTCPInput(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
 	input := NewTCPInput("127.0.0.1:0", &TCPInputConfig{})
-	output := output.NewTestOutput(func(*pkg.Message) {
+	output := output.NewTestOutput(func(*plugin.Message) {
 		wg.Done()
 	})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", input.listener.Addr().String())
 
@@ -52,7 +55,7 @@ func TestTCPInput(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		if _, err = conn.Write(msg); err == nil {
-			_, err = conn.Write(payloadSeparatorAsBytes)
+			_, err = conn.Write(PayloadSeparatorAsBytes)
 		}
 		if err != nil {
 			t.Error(err)
@@ -108,18 +111,18 @@ func TestTCPInputSecure(t *testing.T) {
 		CertificatePath: serverCertPemFile.Name(),
 		KeyPath:         serverPrivPemFile.Name(),
 	})
-	output := output.NewTestOutput(func(*pkg.Message) {
+	output := output.NewTestOutput(func(*plugin.Message) {
 		wg.Done()
 	})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	conf := &tls.Config{
 		InsecureSkipVerify: true,

@@ -1,6 +1,6 @@
 // +build pro
 
-package pkg
+package s3
 
 import (
 	"fmt"

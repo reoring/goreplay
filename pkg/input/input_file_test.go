@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"github.com/reoring/goreplay"
 	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/emitter"
 	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -17,15 +20,15 @@ import (
 
 func TestInputFileWithGET(t *testing.T) {
 	input := NewTestInput()
-	rg := NewRequestGenerator([]pkg.PluginReader{input}, func() { input.EmitGET() }, 1)
-	readPayloads := []*pkg.Message{}
+	rg := NewRequestGenerator([]plugin.PluginReader{input}, func() { input.EmitGET() }, 1)
+	readPayloads := []*plugin.Message{}
 
 	// Given a capture file with a GET request
 	expectedCaptureFile := CreateCaptureFile(rg)
 	defer expectedCaptureFile.TearDown()
 
 	// When the request is read from the capture file
-	err := ReadFromCaptureFile(expectedCaptureFile.file, 1, func(msg *pkg.Message) {
+	err := ReadFromCaptureFile(expectedCaptureFile.file, 1, func(msg *plugin.Message) {
 		readPayloads = append(readPayloads, msg)
 	})
 
@@ -40,15 +43,15 @@ func TestInputFileWithGET(t *testing.T) {
 
 func TestInputFileWithPayloadLargerThan64Kb(t *testing.T) {
 	input := NewTestInput()
-	rg := NewRequestGenerator([]pkg.PluginReader{input}, func() { input.EmitSizedPOST(64 * 1024) }, 1)
-	readPayloads := []*pkg.Message{}
+	rg := NewRequestGenerator([]plugin.PluginReader{input}, func() { input.EmitSizedPOST(64 * 1024) }, 1)
+	readPayloads := []*plugin.Message{}
 
 	// Given a capture file with a request over 64Kb
 	expectedCaptureFile := CreateCaptureFile(rg)
 	defer expectedCaptureFile.TearDown()
 
 	// When the request is read from the capture file
-	err := ReadFromCaptureFile(expectedCaptureFile.file, 1, func(msg *pkg.Message) {
+	err := ReadFromCaptureFile(expectedCaptureFile.file, 1, func(msg *plugin.Message) {
 		readPayloads = append(readPayloads, msg)
 	})
 
@@ -65,18 +68,18 @@ func TestInputFileWithPayloadLargerThan64Kb(t *testing.T) {
 func TestInputFileWithGETAndPOST(t *testing.T) {
 
 	input := NewTestInput()
-	rg := NewRequestGenerator([]pkg.PluginReader{input}, func() {
+	rg := NewRequestGenerator([]plugin.PluginReader{input}, func() {
 		input.EmitGET()
 		input.EmitPOST()
 	}, 2)
-	readPayloads := []*pkg.Message{}
+	readPayloads := []*plugin.Message{}
 
 	// Given a capture file with a GET request
 	expectedCaptureFile := CreateCaptureFile(rg)
 	defer expectedCaptureFile.TearDown()
 
 	// When the requests are read from the capture file
-	err := ReadFromCaptureFile(expectedCaptureFile.file, 2, func(msg *pkg.Message) {
+	err := ReadFromCaptureFile(expectedCaptureFile.file, 2, func(msg *plugin.Message) {
 		readPayloads = append(readPayloads, msg)
 	})
 
@@ -217,14 +220,14 @@ func TestInputFileCompressed(t *testing.T) {
 
 	output := output.NewFileOutput(fmt.Sprintf("/tmp/%d_0.gz", rnd), &output.FileOutputConfig{FlushInterval: time.Minute, Append: true})
 	for i := 0; i < 1000; i++ {
-		output.PluginWrite(&pkg.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+		output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	}
 	name1 := output.file.Name()
 	output.Close()
 
 	output2 := output.NewFileOutput(fmt.Sprintf("/tmp/%d_1.gz", rnd), &output.FileOutputConfig{FlushInterval: time.Minute, Append: true})
 	for i := 0; i < 1000; i++ {
-		output2.PluginWrite(&pkg.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+		output2.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	}
 	name2 := output2.file.Name()
 	output2.Close()
@@ -239,11 +242,11 @@ func TestInputFileCompressed(t *testing.T) {
 }
 
 type CaptureFile struct {
-	msgs []*pkg.Message
+	msgs []*plugin.Message
 	file *os.File
 }
 
-func NewExpectedCaptureFile(msgs []*pkg.Message, file *os.File) *CaptureFile {
+func NewExpectedCaptureFile(msgs []*plugin.Message, file *os.File) *CaptureFile {
 	ecf := new(CaptureFile)
 	ecf.file = file
 	ecf.msgs = msgs
@@ -257,12 +260,12 @@ func (expectedCaptureFile *CaptureFile) TearDown() {
 }
 
 type RequestGenerator struct {
-	inputs []pkg.PluginReader
+	inputs []plugin.PluginReader
 	emit   func()
 	wg     *sync.WaitGroup
 }
 
-func NewRequestGenerator(inputs []pkg.PluginReader, emit func(), count int) (rg *RequestGenerator) {
+func NewRequestGenerator(inputs []plugin.PluginReader, emit func(), count int) (rg *RequestGenerator) {
 	rg = new(RequestGenerator)
 	rg.inputs = inputs
 	rg.emit = emit
@@ -271,7 +274,7 @@ func NewRequestGenerator(inputs []pkg.PluginReader, emit func(), count int) (rg 
 	return
 }
 
-func (expectedCaptureFile *CaptureFile) PayloadsEqual(other []*pkg.Message) bool {
+func (expectedCaptureFile *CaptureFile) PayloadsEqual(other []*plugin.Message) bool {
 
 	if len(expectedCaptureFile.msgs) != len(other) {
 		return false
@@ -296,25 +299,25 @@ func CreateCaptureFile(requestGenerator *RequestGenerator) *CaptureFile {
 		panic(err)
 	}
 
-	readPayloads := []*pkg.Message{}
-	output := output.NewTestOutput(func(msg *pkg.Message) {
+	readPayloads := []*plugin.Message{}
+	output := output.NewTestOutput(func(msg *plugin.Message) {
 		readPayloads = append(readPayloads, msg)
 		requestGenerator.wg.Done()
 	})
 
 	outputFile := output.NewFileOutput(f.Name(), &output.FileOutputConfig{FlushInterval: time.Second, Append: true})
 
-	plugins := &pkg.InOutPlugins{
+	plugins := &plugin.InOutPlugins{
 		Inputs:  requestGenerator.inputs,
-		Outputs: []pkg.PluginWriter{output, outputFile},
+		Outputs: []plugin.PluginWriter{output, outputFile},
 	}
 	for _, input := range requestGenerator.inputs {
 		plugins.All = append(plugins.All, input)
 	}
 	plugins.All = append(plugins.All, output, outputFile)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	requestGenerator.emit()
 	requestGenerator.wg.Wait()
@@ -330,20 +333,20 @@ func ReadFromCaptureFile(captureFile *os.File, count int, callback main.writeCal
 	wg := new(sync.WaitGroup)
 
 	input := NewFileInput(captureFile.Name(), false, 100, 0, false)
-	output := output.NewTestOutput(func(msg *pkg.Message) {
+	output := output.NewTestOutput(func(msg *plugin.Message) {
 		callback(msg)
 		wg.Done()
 	})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
 	wg.Add(count)
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	done := make(chan int, 1)
 	go func() {

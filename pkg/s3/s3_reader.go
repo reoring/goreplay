@@ -1,8 +1,9 @@
-package pkg
+package s3
 
 import (
 	"bytes"
 	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/pro"
 	"log"
 	"os"
 	"strconv"
@@ -53,7 +54,7 @@ func AwsConfig() *aws.Config {
 
 // NewS3ReadCloser returns new instance of S3 read closer
 func NewS3ReadCloser(path string) *S3ReadCloser {
-	if !PRO {
+	if !pro.PRO {
 		log.Fatal("Using S3 input and output require PRO license")
 		return nil
 	}

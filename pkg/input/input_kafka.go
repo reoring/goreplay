@@ -2,8 +2,10 @@ package input
 
 import (
 	"encoding/json"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/kafka"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"strings"
 
@@ -26,8 +28,8 @@ func NewKafkaInput(address string, config *kafka.InputKafkaConfig, tlsConfig *ka
 
 	var con sarama.Consumer
 
-	if mock, ok := config.consumer.(*mocks.Consumer); ok && mock != nil {
-		con = config.consumer
+	if mock, ok := config.Consumer.(*mocks.Consumer); ok && mock != nil {
+		con = config.Consumer
 	} else {
 		var err error
 		con, err = sarama.NewConsumer(strings.Split(config.Host, ","), c)
@@ -74,14 +76,14 @@ func NewKafkaInput(address string, config *kafka.InputKafkaConfig, tlsConfig *ka
 // ErrorHandler should receive errors
 func (i *KafkaInput) ErrorHandler(consumer sarama.PartitionConsumer) {
 	for err := range consumer.Errors() {
-		pkg.Debug(1, "Failed to read access log entry:", err)
+		settings.Debug(1, "Failed to read access log entry:", err)
 	}
 }
 
 // PluginRead a reads message from this plugin
-func (i *KafkaInput) PluginRead() (*pkg.Message, error) {
+func (i *KafkaInput) PluginRead() (*plugin.Message, error) {
 	var message *sarama.ConsumerMessage
-	var msg pkg.Message
+	var msg plugin.Message
 	select {
 	case <-i.quit:
 		return nil, ErrorStopped
@@ -97,14 +99,14 @@ func (i *KafkaInput) PluginRead() (*pkg.Message, error) {
 		var err error
 		msg.Data, err = kafkaMessage.Dump()
 		if err != nil {
-			pkg.Debug(1, "[INPUT-KAFKA] failed to decode access log entry:", err)
+			settings.Debug(1, "[INPUT-KAFKA] failed to decode access log entry:", err)
 			return nil, err
 		}
 	}
 
 	// does it have meta
-	if pkg.isOriginPayload(msg.Data) {
-		msg.Meta, msg.Data = pkg.payloadMetaWithBody(msg.Data)
+	if protocol.IsOriginPayload(msg.Data) {
+		msg.Meta, msg.Data = protocol.PayloadMetaWithBody(msg.Data)
 	}
 
 	return &msg, nil

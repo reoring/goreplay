@@ -1,8 +1,8 @@
 package output
 
 import (
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/plugin"
 	"os"
 )
 
@@ -18,13 +18,13 @@ func NewDummyOutput() (di *DummyOutput) {
 }
 
 // PluginWrite writes message to this plugin
-func (i *DummyOutput) PluginWrite(msg *pkg.Message) (int, error) {
+func (i *DummyOutput) PluginWrite(msg *plugin.Message) (int, error) {
 	var n, nn int
 	var err error
 	n, err = os.Stdout.Write(msg.Meta)
 	nn, err = os.Stdout.Write(msg.Data)
 	n += nn
-	nn, err = os.Stdout.Write(input.payloadSeparatorAsBytes)
+	nn, err = os.Stdout.Write(input.PayloadSeparatorAsBytes)
 	n += nn
 
 	return n, err

@@ -1,6 +1,8 @@
 package output
 
-import "github.com/reoring/goreplay/pkg"
+import (
+	"github.com/reoring/goreplay/pkg/plugin"
+)
 
 // NullOutput used for debugging, prints nothing
 type NullOutput struct {
@@ -12,7 +14,7 @@ func NewNullOutput() (o *NullOutput) {
 }
 
 // PluginWrite writes message to this plugin
-func (o *NullOutput) PluginWrite(msg *pkg.Message) (int, error) {
+func (o *NullOutput) PluginWrite(msg *plugin.Message) (int, error) {
 	return len(msg.Data) + len(msg.Meta), nil
 }
 

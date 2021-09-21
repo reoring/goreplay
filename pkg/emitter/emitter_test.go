@@ -1,10 +1,14 @@
-package pkg
+package emitter
 
 import (
 	"fmt"
 	"github.com/reoring/goreplay/pkg/http"
 	"github.com/reoring/goreplay/pkg/input"
 	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/pro"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -13,7 +17,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	PRO = true
+	pro.PRO = true
 	code := m.Run()
 	os.Exit(code)
 }
@@ -22,18 +26,18 @@ func TestEmitter(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
 	input := input.NewTestInput()
-	output := output.NewTestOutput(func(*Message) {
+	output := output.NewTestOutput(func(*plugin.Message) {
 		wg.Done()
 	})
 
-	plugins := &InOutPlugins{
-		Inputs:  []PluginReader{input},
-		Outputs: []PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
 	emitter := NewEmitter()
-	go emitter.Start(plugins, Settings.Middleware)
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	for i := 0; i < 1000; i++ {
 		wg.Add(1)
@@ -50,39 +54,39 @@ func TestEmitterFiltered(t *testing.T) {
 	input := input.NewTestInput()
 	input.SetSkipHeader(true)
 
-	output := output.NewTestOutput(func(*Message) {
+	output := output.NewTestOutput(func(*plugin.Message) {
 		wg.Done()
 	})
 
-	plugins := &InOutPlugins{
-		Inputs:  []PluginReader{input},
-		Outputs: []PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
 	methods := http.HTTPMethods{[]byte("GET")}
-	Settings.ModifierConfig = http.HTTPModifierConfig{Methods: methods}
+	settings.Settings.ModifierConfig = http.HTTPModifierConfig{Methods: methods}
 
 	emitter := &Emitter{}
 	go emitter.Start(plugins, "")
 
 	wg.Add(2)
 
-	id := Uuid()
-	reqh := PayloadHeader(RequestPayload, id, time.Now().UnixNano(), -1)
+	id := protocol.Uuid()
+	reqh := protocol.PayloadHeader(protocol.RequestPayload, id, time.Now().UnixNano(), -1)
 	reqb := append(reqh, []byte("POST / HTTP/1.1\r\nHost: www.w3.org\r\nUser-Agent: Go 1.1 package http\r\nAccept-Encoding: gzip\r\n\r\n")...)
 
-	resh := PayloadHeader(ResponsePayload, id, time.Now().UnixNano()+1, 1)
+	resh := protocol.PayloadHeader(protocol.ResponsePayload, id, time.Now().UnixNano()+1, 1)
 	respb := append(resh, []byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")...)
 
 	input.EmitBytes(reqb)
 	input.EmitBytes(respb)
 
-	id = Uuid()
-	reqh = PayloadHeader(RequestPayload, id, time.Now().UnixNano(), -1)
+	id = protocol.Uuid()
+	reqh = protocol.PayloadHeader(protocol.RequestPayload, id, time.Now().UnixNano(), -1)
 	reqb = append(reqh, []byte("GET / HTTP/1.1\r\nHost: www.w3.org\r\nUser-Agent: Go 1.1 package http\r\nAccept-Encoding: gzip\r\n\r\n")...)
 
-	resh = PayloadHeader(ResponsePayload, id, time.Now().UnixNano()+1, 1)
+	resh = protocol.PayloadHeader(protocol.ResponsePayload, id, time.Now().UnixNano()+1, 1)
 	respb = append(resh, []byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")...)
 
 	input.EmitBytes(reqb)
@@ -91,7 +95,7 @@ func TestEmitterFiltered(t *testing.T) {
 	wg.Wait()
 	emitter.Close()
 
-	Settings.ModifierConfig = http.HTTPModifierConfig{}
+	settings.Settings.ModifierConfig = http.HTTPModifierConfig{}
 }
 
 func TestEmitterSplitRoundRobin(t *testing.T) {
@@ -101,25 +105,25 @@ func TestEmitterSplitRoundRobin(t *testing.T) {
 
 	var counter1, counter2 int32
 
-	output1 := output.NewTestOutput(func(*Message) {
+	output1 := output.NewTestOutput(func(*plugin.Message) {
 		atomic.AddInt32(&counter1, 1)
 		wg.Done()
 	})
 
-	output2 := output.NewTestOutput(func(*Message) {
+	output2 := output.NewTestOutput(func(*plugin.Message) {
 		atomic.AddInt32(&counter2, 1)
 		wg.Done()
 	})
 
-	plugins := &InOutPlugins{
-		Inputs:  []PluginReader{input},
-		Outputs: []PluginWriter{output1, output2},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output1, output2},
 	}
 
-	Settings.SplitOutput = true
+	settings.Settings.SplitOutput = true
 
 	emitter := NewEmitter()
-	go emitter.Start(plugins, Settings.Middleware)
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	for i := 0; i < 1000; i++ {
 		wg.Add(1)
@@ -134,7 +138,7 @@ func TestEmitterSplitRoundRobin(t *testing.T) {
 		t.Errorf("Round robin should split traffic equally: %d vs %d", counter1, counter2)
 	}
 
-	Settings.SplitOutput = false
+	settings.Settings.SplitOutput = false
 }
 
 func TestEmitterRoundRobin(t *testing.T) {
@@ -144,26 +148,26 @@ func TestEmitterRoundRobin(t *testing.T) {
 
 	var counter1, counter2 int32
 
-	output1 := output.NewTestOutput(func(*Message) {
+	output1 := output.NewTestOutput(func(*plugin.Message) {
 		counter1++
 		wg.Done()
 	})
 
-	output2 := output.NewTestOutput(func(*Message) {
+	output2 := output.NewTestOutput(func(*plugin.Message) {
 		counter2++
 		wg.Done()
 	})
 
-	plugins := &InOutPlugins{
-		Inputs:  []PluginReader{input},
-		Outputs: []PluginWriter{output1, output2},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output1, output2},
 	}
 	plugins.All = append(plugins.All, input, output1, output2)
 
-	Settings.SplitOutput = true
+	settings.Settings.SplitOutput = true
 
 	emitter := NewEmitter()
-	go emitter.Start(plugins, Settings.Middleware)
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	for i := 0; i < 1000; i++ {
 		wg.Add(1)
@@ -177,7 +181,7 @@ func TestEmitterRoundRobin(t *testing.T) {
 		t.Errorf("Round robin should split traffic equally: %d vs %d", counter1, counter2)
 	}
 
-	Settings.SplitOutput = false
+	settings.Settings.SplitOutput = false
 }
 
 func TestEmitterSplitSession(t *testing.T) {
@@ -189,30 +193,30 @@ func TestEmitterSplitSession(t *testing.T) {
 
 	var counter1, counter2 int32
 
-	output1 := output.NewTestOutput(func(msg *Message) {
-		if PayloadID(msg.Meta)[0] == 'a' {
+	output1 := output.NewTestOutput(func(msg *plugin.Message) {
+		if protocol.PayloadID(msg.Meta)[0] == 'a' {
 			counter1++
 		}
 		wg.Done()
 	})
 
-	output2 := output.NewTestOutput(func(msg *Message) {
-		if PayloadID(msg.Meta)[0] == 'b' {
+	output2 := output.NewTestOutput(func(msg *plugin.Message) {
+		if protocol.PayloadID(msg.Meta)[0] == 'b' {
 			counter2++
 		}
 		wg.Done()
 	})
 
-	plugins := &InOutPlugins{
-		Inputs:  []PluginReader{input},
-		Outputs: []PluginWriter{output1, output2},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output1, output2},
 	}
 
-	Settings.SplitOutput = true
-	Settings.RecognizeTCPSessions = true
+	settings.Settings.SplitOutput = true
+	settings.Settings.RecognizeTCPSessions = true
 
 	emitter := NewEmitter()
-	go emitter.Start(plugins, Settings.Middleware)
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	for i := 0; i < 200; i++ {
 		// Keep session but randomize
@@ -231,8 +235,8 @@ func TestEmitterSplitSession(t *testing.T) {
 		t.Errorf("Round robin should split traffic equally: %d vs %d", counter1, counter2)
 	}
 
-	Settings.SplitOutput = false
-	Settings.RecognizeTCPSessions = false
+	settings.Settings.SplitOutput = false
+	settings.Settings.RecognizeTCPSessions = false
 	emitter.Close()
 }
 
@@ -241,18 +245,18 @@ func BenchmarkEmitter(b *testing.B) {
 
 	input := input.NewTestInput()
 
-	output := output.NewTestOutput(func(*Message) {
+	output := output.NewTestOutput(func(*plugin.Message) {
 		wg.Done()
 	})
 
-	plugins := &InOutPlugins{
-		Inputs:  []PluginReader{input},
-		Outputs: []PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
 	emitter := NewEmitter()
-	go emitter.Start(plugins, Settings.Middleware)
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	b.ResetTimer()
 

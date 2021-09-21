@@ -1,7 +1,8 @@
 package input
 
 import (
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
 	"log"
 	"net"
 	"net/http"
@@ -29,14 +30,14 @@ func NewHTTPInput(address string) (i *HTTPInput) {
 }
 
 // PluginRead reads message from this plugin
-func (i *HTTPInput) PluginRead() (*pkg.Message, error) {
-	var msg pkg.Message
+func (i *HTTPInput) PluginRead() (*plugin.Message, error) {
+	var msg plugin.Message
 	select {
 	case <-i.stop:
 		return nil, ErrorStopped
 	case buf := <-i.data:
 		msg.Data = buf
-		msg.Meta = pkg.payloadHeader(pkg.RequestPayload, pkg.uuid(), time.Now().UnixNano(), -1)
+		msg.Meta = protocol.PayloadHeader(protocol.RequestPayload, protocol.Uuid(), time.Now().UnixNano(), -1)
 		return &msg, nil
 	}
 }

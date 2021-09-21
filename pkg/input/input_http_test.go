@@ -2,8 +2,10 @@ package input
 
 import (
 	"bytes"
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/emitter"
 	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/settings"
 	"net/http"
 	"strings"
 	"sync"
@@ -16,18 +18,18 @@ func TestHTTPInput(t *testing.T) {
 
 	input := NewHTTPInput("127.0.0.1:0")
 	time.Sleep(time.Millisecond)
-	output := output.NewTestOutput(func(*pkg.Message) {
+	output := output.NewTestOutput(func(*plugin.Message) {
 		wg.Done()
 	})
 
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := pkg.NewEmitter()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	emitter := emitter.NewEmitter()
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	address := strings.Replace(input.address, "[::]", "127.0.0.1", -1)
 
@@ -47,22 +49,22 @@ func TestInputHTTPLargePayload(t *testing.T) {
 	large[n-1] = '0'
 
 	input := NewHTTPInput("127.0.0.1:0")
-	output := output.NewTestOutput(func(msg *pkg.Message) {
+	output := output.NewTestOutput(func(msg *plugin.Message) {
 		_len := len(msg.Data)
 		if _len >= n { // considering http body CRLF
 			t.Errorf("expected body to be >= %d", n)
 		}
 		wg.Done()
 	})
-	plugins := &pkg.InOutPlugins{
-		Inputs:  []pkg.PluginReader{input},
-		Outputs: []pkg.PluginWriter{output},
+	plugins := &plugin.InOutPlugins{
+		Inputs:  []plugin.PluginReader{input},
+		Outputs: []plugin.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := pkg.NewEmitter()
+	emitter := emitter.NewEmitter()
 	defer emitter.Close()
-	go emitter.Start(plugins, pkg.Settings.Middleware)
+	go emitter.Start(plugins, settings.Settings.Middleware)
 
 	address := strings.Replace(input.address, "[::]", "127.0.0.1", -1)
 	var req *http.Request

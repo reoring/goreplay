@@ -6,6 +6,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"log"
 	"net"
@@ -13,7 +16,7 @@ import (
 
 // TCPInput used for internal communication
 type TCPInput struct {
-	data     chan *pkg.Message
+	data     chan *plugin.Message
 	listener net.Listener
 	address  string
 	config   *TCPInputConfig
@@ -30,7 +33,7 @@ type TCPInputConfig struct {
 // NewTCPInput constructor for TCPInput, accepts address with port
 func NewTCPInput(address string, config *TCPInputConfig) (i *TCPInput) {
 	i = new(TCPInput)
-	i.data = make(chan *pkg.Message, 1000)
+	i.data = make(chan *plugin.Message, 1000)
 	i.address = address
 	i.config = config
 	i.stop = make(chan bool)
@@ -41,7 +44,7 @@ func NewTCPInput(address string, config *TCPInputConfig) (i *TCPInput) {
 }
 
 // PluginRead returns data and details read from plugin
-func (i *TCPInput) PluginRead() (msg *pkg.Message, err error) {
+func (i *TCPInput) PluginRead() (msg *plugin.Message, err error) {
 	select {
 	case <-i.stop:
 		return nil, main.ErrorStopped
@@ -89,14 +92,14 @@ func (i *TCPInput) listen(address string) {
 				continue
 			}
 			if operr, ok := err.(*net.OpError); ok && operr.Err.Error() != "use of closed network connection" {
-				pkg.Debug(0, fmt.Sprintf("[INPUT-TCP] listener closed, err: %q", err))
+				settings.Debug(0, fmt.Sprintf("[INPUT-TCP] listener closed, err: %q", err))
 			}
 			break
 		}
 	}()
 }
 
-var payloadSeparatorAsBytes = []byte(pkg.payloadSeparator)
+var PayloadSeparatorAsBytes = []byte(protocol.PayloadSeparator)
 
 func (i *TCPInput) handleConnection(conn net.Conn) {
 	defer conn.Close()
@@ -111,16 +114,16 @@ func (i *TCPInput) handleConnection(conn net.Conn) {
 				continue
 			}
 			if err != io.EOF {
-				pkg.Debug(0, fmt.Sprintf("[INPUT-TCP] connection error: %q", err))
+				settings.Debug(0, fmt.Sprintf("[INPUT-TCP] connection error: %q", err))
 			}
 			break
 		}
 
-		if bytes.Equal(payloadSeparatorAsBytes[1:], line) {
+		if bytes.Equal(PayloadSeparatorAsBytes[1:], line) {
 			// unread the '\n' before monkeys
 			buffer.UnreadByte()
-			var msg pkg.Message
-			msg.Meta, msg.Data = pkg.payloadMetaWithBody(buffer.Bytes())
+			var msg plugin.Message
+			msg.Meta, msg.Data = protocol.PayloadMetaWithBody(buffer.Bytes())
 			i.data <- &msg
 			buffer.Reset()
 		} else {

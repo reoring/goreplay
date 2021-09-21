@@ -5,10 +5,12 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/reoring/goreplay"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/elasticsearch"
 	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
+	"github.com/reoring/goreplay/pkg/stat"
 	"log"
 	"math"
 	"net/http"
@@ -22,8 +24,8 @@ import (
 
 const (
 	initialDynamicWorkers = 10
-	readChunkSize         = 64 * 1024
-	maxResponseSize       = 1073741824
+	ReadChunkSize   = 64 * 1024
+	MaxResponseSize = 1073741824
 )
 
 type response struct {
@@ -58,18 +60,18 @@ type HTTPOutputConfig struct {
 type HTTPOutput struct {
 	activeWorkers int32
 	config        *HTTPOutputConfig
-	queueStats    *main.GorStat
+	queueStats    *stat.GorStat
 	elasticSearch *elasticsearch.ESPlugin
 	client        *HTTPClient
 	stopWorker    chan struct{}
-	queue         chan *pkg.Message
+	queue         chan *plugin.Message
 	responses     chan *response
 	stop          chan bool // Channel used only to indicate goroutine should shutdown
 }
 
 // NewHTTPOutput constructor for HTTPOutput
 // Initialize workers
-func NewHTTPOutput(address string, config *HTTPOutputConfig) pkg.PluginReadWriter {
+func NewHTTPOutput(address string, config *HTTPOutputConfig) plugin.PluginReadWriter {
 	o := new(HTTPOutput)
 	var err error
 	config.url, err = url.Parse(address)
@@ -110,10 +112,10 @@ func NewHTTPOutput(address string, config *HTTPOutputConfig) pkg.PluginReadWrite
 	o.config = config
 	o.stop = make(chan bool)
 	if o.config.Stats {
-		o.queueStats = main.NewGorStat("output_http", o.config.StatsMs)
+		o.queueStats = stat.NewGorStat("output_http", o.config.StatsMs)
 	}
 
-	o.queue = make(chan *pkg.Message, o.config.QueueLen)
+	o.queue = make(chan *plugin.Message, o.config.QueueLen)
 	if o.config.TrackResponses {
 		o.responses = make(chan *response, o.config.QueueLen)
 	}
@@ -172,8 +174,8 @@ func (o *HTTPOutput) startWorker() {
 }
 
 // PluginWrite writes message to this plugin
-func (o *HTTPOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
-	if !pkg.isRequestPayload(msg.Meta) {
+func (o *HTTPOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
+	if !protocol.IsRequestPayload(msg.Meta) {
 		return len(msg.Data), nil
 	}
 
@@ -197,12 +199,12 @@ func (o *HTTPOutput) PluginWrite(msg *pkg.Message) (n int, err error) {
 }
 
 // PluginRead reads message from this plugin
-func (o *HTTPOutput) PluginRead() (*pkg.Message, error) {
+func (o *HTTPOutput) PluginRead() (*plugin.Message, error) {
 	if !o.config.TrackResponses {
 		return nil, input.ErrorStopped
 	}
 	var resp *response
-	var msg pkg.Message
+	var msg plugin.Message
 	select {
 	case <-o.stop:
 		return nil, input.ErrorStopped
@@ -210,23 +212,23 @@ func (o *HTTPOutput) PluginRead() (*pkg.Message, error) {
 		msg.Data = resp.payload
 	}
 
-	msg.Meta = pkg.payloadHeader(pkg.ReplayedResponsePayload, resp.uuid, resp.roundTripTime, resp.startedAt)
+	msg.Meta = protocol.PayloadHeader(protocol.ReplayedResponsePayload, resp.uuid, resp.roundTripTime, resp.startedAt)
 
 	return &msg, nil
 }
 
-func (o *HTTPOutput) sendRequest(client *HTTPClient, msg *pkg.Message) {
-	if !pkg.isRequestPayload(msg.Meta) {
+func (o *HTTPOutput) sendRequest(client *HTTPClient, msg *plugin.Message) {
+	if !protocol.IsRequestPayload(msg.Meta) {
 		return
 	}
 
-	uuid := pkg.payloadID(msg.Meta)
+	uuid := protocol.PayloadID(msg.Meta)
 	start := time.Now()
 	resp, err := client.Send(msg.Data)
 	stop := time.Now()
 
 	if err != nil {
-		pkg.Debug(1, fmt.Sprintf("[HTTP-OUTPUT] error when sending: %q", err))
+		settings.Debug(1, fmt.Sprintf("[HTTP-OUTPUT] error when sending: %q", err))
 		return
 	}
 	if resp == nil {
@@ -268,12 +270,12 @@ func NewHTTPClient(config *HTTPOutputConfig) *HTTPClient {
 		Timeout: client.config.Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= client.config.RedirectLimit {
-				pkg.Debug(1, fmt.Sprintf("[HTTPCLIENT] maximum output-http-redirects[%d] reached!", client.config.RedirectLimit))
+				settings.Debug(1, fmt.Sprintf("[HTTPCLIENT] maximum output-http-redirects[%d] reached!", client.config.RedirectLimit))
 				return http.ErrUseLastResponse
 			}
 			lastReq := via[len(via)-1]
 			resp := req.Response
-			pkg.Debug(2, fmt.Sprintf("[HTTPCLIENT] HTTP redirects from %q to %q with %q", lastReq.Host, req.Host, resp.Status))
+			settings.Debug(2, fmt.Sprintf("[HTTPCLIENT] HTTP redirects from %q to %q with %q", lastReq.Host, req.Host, resp.Status))
 			return nil
 		},
 	}

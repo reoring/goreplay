@@ -3,7 +3,9 @@ package input
 import (
 	"context"
 	"fmt"
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/protocol"
+	"github.com/reoring/goreplay/pkg/settings"
 	"log"
 	"net"
 	"strconv"
@@ -78,9 +80,9 @@ func NewRAWInput(address string, config RAWInputConfig) (i *RAWInput) {
 }
 
 // PluginRead reads meassage from this plugin
-func (i *RAWInput) PluginRead() (*pkg.Message, error) {
+func (i *RAWInput) PluginRead() (*plugin.Message, error) {
 	var msgTCP *tcp.Message
-	var msg pkg.Message
+	var msg plugin.Message
 	select {
 	case <-i.quit:
 		return nil, ErrorStopped
@@ -88,22 +90,22 @@ func (i *RAWInput) PluginRead() (*pkg.Message, error) {
 		msg.Data = msgTCP.Data()
 	}
 
-	var msgType byte = pkg.ResponsePayload
+	var msgType byte = protocol.ResponsePayload
 	if msgTCP.Direction == tcp.DirIncoming {
-		msgType = pkg.RequestPayload
+		msgType = protocol.RequestPayload
 		if i.RealIPHeader != "" {
 			msg.Data = proto.SetHeader(msg.Data, []byte(i.RealIPHeader), []byte(msgTCP.SrcAddr))
 		}
 	}
-	msg.Meta = pkg.payloadHeader(msgType, msgTCP.UUID(), msgTCP.Start.UnixNano(), msgTCP.End.UnixNano()-msgTCP.Start.UnixNano())
+	msg.Meta = protocol.PayloadHeader(msgType, msgTCP.UUID(), msgTCP.Start.UnixNano(), msgTCP.End.UnixNano()-msgTCP.Start.UnixNano())
 
 	// to be removed....
 	if msgTCP.Truncated {
-		pkg.Debug(2, "[INPUT-RAW] message truncated, increase copy-buffer-size")
+		settings.Debug(2, "[INPUT-RAW] message truncated, increase copy-buffer-size")
 	}
 	// to be removed...
 	if msgTCP.TimedOut {
-		pkg.Debug(2, "[INPUT-RAW] message timeout reached, increase input-raw-expire")
+		settings.Debug(2, "[INPUT-RAW] message timeout reached, increase input-raw-expire")
 	}
 	if i.Stats {
 		stat := msgTCP.Stats
@@ -129,7 +131,7 @@ func (i *RAWInput) listen(address string) {
 	ctx, i.cancelListener = context.WithCancel(context.Background())
 	errCh := i.listener.ListenBackground(ctx)
 	<-i.listener.Reading
-	pkg.Debug(1, i)
+	settings.Debug(1, i)
 	go func() {
 		<-errCh // the listener closed voluntarily
 		i.Close()
