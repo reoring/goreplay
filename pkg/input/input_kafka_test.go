@@ -1,7 +1,7 @@
 package input
 
 import (
-	"github.com/buger/goreplay/pkg/kafka"
+	"github.com/reoring/goreplay/pkg/kafka"
 	"testing"
 
 	"github.com/Shopify/sarama"

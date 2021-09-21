@@ -3,7 +3,7 @@ package output
 import (
 	_ "bufio"
 	"fmt"
-	"github.com/buger/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg"
 	_ "io"
 	"log"
 	"math/rand"

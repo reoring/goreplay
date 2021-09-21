@@ -2,8 +2,8 @@ package output
 
 import (
 	"fmt"
-	"github.com/buger/goreplay/pkg"
-	input3 "github.com/buger/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg"
+	input3 "github.com/reoring/goreplay/pkg/input"
 	"math/rand"
 	"os"
 	"reflect"
@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/buger/goreplay/size"
+	"github.com/reoring/goreplay/size"
 )
 
 func TestFileOutput(t *testing.T) {

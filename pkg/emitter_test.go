@@ -2,10 +2,9 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/buger/goreplay"
-	"github.com/buger/goreplay/pkg/http"
-	"github.com/buger/goreplay/pkg/input"
-	"github.com/buger/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/http"
+	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/output"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -49,7 +48,7 @@ func TestEmitterFiltered(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
 	input := input.NewTestInput()
-	input.skipHeader = true
+	input.SetSkipHeader(true)
 
 	output := output.NewTestOutput(func(*Message) {
 		wg.Done()
@@ -69,21 +68,21 @@ func TestEmitterFiltered(t *testing.T) {
 
 	wg.Add(2)
 
-	id := main.uuid()
-	reqh := main.payloadHeader(RequestPayload, id, time.Now().UnixNano(), -1)
+	id := Uuid()
+	reqh := PayloadHeader(RequestPayload, id, time.Now().UnixNano(), -1)
 	reqb := append(reqh, []byte("POST / HTTP/1.1\r\nHost: www.w3.org\r\nUser-Agent: Go 1.1 package http\r\nAccept-Encoding: gzip\r\n\r\n")...)
 
-	resh := main.payloadHeader(ResponsePayload, id, time.Now().UnixNano()+1, 1)
+	resh := PayloadHeader(ResponsePayload, id, time.Now().UnixNano()+1, 1)
 	respb := append(resh, []byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")...)
 
 	input.EmitBytes(reqb)
 	input.EmitBytes(respb)
 
-	id = main.uuid()
-	reqh = main.payloadHeader(RequestPayload, id, time.Now().UnixNano(), -1)
+	id = Uuid()
+	reqh = PayloadHeader(RequestPayload, id, time.Now().UnixNano(), -1)
 	reqb = append(reqh, []byte("GET / HTTP/1.1\r\nHost: www.w3.org\r\nUser-Agent: Go 1.1 package http\r\nAccept-Encoding: gzip\r\n\r\n")...)
 
-	resh = main.payloadHeader(ResponsePayload, id, time.Now().UnixNano()+1, 1)
+	resh = PayloadHeader(ResponsePayload, id, time.Now().UnixNano()+1, 1)
 	respb = append(resh, []byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")...)
 
 	input.EmitBytes(reqb)
@@ -186,19 +185,19 @@ func TestEmitterSplitSession(t *testing.T) {
 	wg.Add(200)
 
 	input := input.NewTestInput()
-	input.skipHeader = true
+	input.SetSkipHeader(true)
 
 	var counter1, counter2 int32
 
 	output1 := output.NewTestOutput(func(msg *Message) {
-		if main.payloadID(msg.Meta)[0] == 'a' {
+		if PayloadID(msg.Meta)[0] == 'a' {
 			counter1++
 		}
 		wg.Done()
 	})
 
 	output2 := output.NewTestOutput(func(msg *Message) {
-		if main.payloadID(msg.Meta)[0] == 'b' {
+		if PayloadID(msg.Meta)[0] == 'b' {
 			counter2++
 		}
 		wg.Done()

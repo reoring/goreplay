@@ -1,8 +1,8 @@
 package pkg
 
 import (
-	"github.com/buger/goreplay/pkg/input"
-	"github.com/buger/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/output"
 	"testing"
 )
 

@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"bytes"
-	"github.com/buger/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/output"
 	"log"
 	"os"
 	"strconv"

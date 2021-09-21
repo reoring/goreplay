@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/buger/goreplay/proto"
-	"github.com/buger/goreplay/size"
-	"github.com/buger/goreplay/tcp"
+	"github.com/reoring/goreplay/proto"
+	"github.com/reoring/goreplay/size"
+	"github.com/reoring/goreplay/tcp"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"

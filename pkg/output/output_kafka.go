@@ -2,14 +2,14 @@ package output
 
 import (
 	"encoding/json"
-	"github.com/buger/goreplay/pkg"
-	"github.com/buger/goreplay/pkg/kafka"
+	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/kafka"
 	"log"
 	"strings"
 	"time"
 
-	"github.com/buger/goreplay/byteutils"
-	"github.com/buger/goreplay/proto"
+	"github.com/reoring/goreplay/byteutils"
+	"github.com/reoring/goreplay/proto"
 
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"

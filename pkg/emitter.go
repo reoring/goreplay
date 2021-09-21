@@ -2,15 +2,15 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/buger/goreplay/pkg/http"
-	"github.com/buger/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/http"
+	"github.com/reoring/goreplay/pkg/input"
 	"hash/fnv"
 	"io"
 	"log"
 	"sync"
 	"time"
 
-	"github.com/buger/goreplay/byteutils"
+	"github.com/reoring/goreplay/byteutils"
 )
 
 // Emitter represents an abject to manage plugins communication

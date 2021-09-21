@@ -1,6 +1,6 @@
 package output
 
-import "github.com/buger/goreplay/pkg"
+import "github.com/reoring/goreplay/pkg"
 
 // NullOutput used for debugging, prints nothing
 type NullOutput struct {

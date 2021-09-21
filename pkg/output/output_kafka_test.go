@@ -1,8 +1,8 @@
 package output
 
 import (
-	"github.com/buger/goreplay/pkg"
-	"github.com/buger/goreplay/pkg/kafka"
+	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/kafka"
 	"testing"
 
 	"github.com/Shopify/sarama"

@@ -5,8 +5,8 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
-	"github.com/buger/goreplay/pkg"
-	"github.com/buger/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/input"
 	"io"
 	"log"
 	"math/rand"
@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/buger/goreplay/size"
+	"github.com/reoring/goreplay/size"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

@@ -2,8 +2,8 @@ package output
 
 import (
 	"bufio"
-	"github.com/buger/goreplay/pkg"
-	"github.com/buger/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/input"
 	"log"
 	"net"
 	"sync"

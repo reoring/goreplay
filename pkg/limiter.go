@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/buger/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/input"
 	"io"
 	"math/rand"
 	"strconv"

@@ -2,13 +2,13 @@ package elasticsearch
 
 import (
 	"encoding/json"
-	"github.com/buger/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg"
 	"log"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/buger/goreplay/proto"
+	"github.com/reoring/goreplay/proto"
 
 	elastigo "github.com/mattbaird/elastigo/lib"
 )

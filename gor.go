@@ -6,7 +6,7 @@ import (
 	"expvar"
 	"flag"
 	"fmt"
-	"github.com/buger/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg"
 	"log"
 	"net/http"
 	"net/http/httputil"

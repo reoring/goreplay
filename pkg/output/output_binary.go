@@ -1,13 +1,13 @@
 package output
 
 import (
-	"github.com/buger/goreplay"
-	"github.com/buger/goreplay/pkg"
-	"github.com/buger/goreplay/pkg/input"
+	"github.com/reoring/goreplay"
+	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/input"
 	"sync/atomic"
 	"time"
 
-	"github.com/buger/goreplay/size"
+	"github.com/reoring/goreplay/size"
 )
 
 // BinaryOutputConfig struct for holding binary output configuration

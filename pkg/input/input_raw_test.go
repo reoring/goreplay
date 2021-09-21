@@ -2,8 +2,8 @@ package input
 
 import (
 	"bytes"
-	"github.com/buger/goreplay/pkg"
-	"github.com/buger/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/output"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -16,9 +16,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/buger/goreplay/capture"
-	"github.com/buger/goreplay/proto"
-	"github.com/buger/goreplay/tcp"
+	"github.com/reoring/goreplay/capture"
+	"github.com/reoring/goreplay/proto"
+	"github.com/reoring/goreplay/tcp"
 )
 
 const testRawExpire = time.Millisecond * 200

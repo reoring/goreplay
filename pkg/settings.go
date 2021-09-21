@@ -3,10 +3,10 @@ package pkg
 import (
 	"flag"
 	"fmt"
-	"github.com/buger/goreplay/pkg/http"
-	"github.com/buger/goreplay/pkg/input"
-	"github.com/buger/goreplay/pkg/kafka"
-	"github.com/buger/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/http"
+	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/kafka"
+	"github.com/reoring/goreplay/pkg/output"
 	"os"
 	"sync"
 	"time"
@@ -82,7 +82,7 @@ type AppSettings struct {
 var Settings AppSettings
 
 func usage() {
-	fmt.Printf("Gor is a simple http traffic replication tool written in Go. Its main goal is to replay traffic from production servers to staging and dev environments.\nProject page: https://github.com/buger/gor\nAuthor: <Leonid Bugaev> leonsbox@gmail.com\nCurrent Version: v%s\n\n", VERSION)
+	fmt.Printf("Gor is a simple http traffic replication tool written in Go. Its main goal is to replay traffic from production servers to staging and dev environments.\nProject page: https://github.com/reoring/gor\nAuthor: <Leonid Bugaev> leonsbox@gmail.com\nCurrent Version: v%s\n\n", VERSION)
 	flag.PrintDefaults()
 	os.Exit(2)
 }

@@ -1,5 +1,5 @@
 SOURCE = $(shell ls -1 *.go | grep -v _test.go)
-SOURCE_PATH = /go/src/github.com/buger/goreplay/
+SOURCE_PATH = /go/src/github.com/reoring/goreplay/
 PORT = 8000
 FADDR = :8000
 CONTAINER=gor
@@ -63,8 +63,8 @@ release-mac:
 
 release-windows:
 	docker run -it --rm \
-	  -v `pwd`:/go/src/github.com/buger/goreplay \
-	  -w /go/src/github.com/buger/goreplay \
+	  -v `pwd`:/go/src/github.com/reoring/goreplay \
+	  -w /go/src/github.com/reoring/goreplay \
 	  -e CGO_ENABLED=1 \
 	  docker.elastic.co/beats-dev/golang-crossbuild:1.16.4-main \
 	  --build-cmd "make VERSION=$(VERSION) build" \

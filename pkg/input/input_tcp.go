@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/buger/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg"
 	"io"
 	"log"
 	"net"

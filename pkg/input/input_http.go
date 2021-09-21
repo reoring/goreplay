@@ -1,7 +1,7 @@
 package input
 
 import (
-	"github.com/buger/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg"
 	"log"
 	"net"
 	"net/http"

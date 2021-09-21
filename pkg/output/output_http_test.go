@@ -1,9 +1,9 @@
 package output
 
 import (
-	"github.com/buger/goreplay/pkg"
-	http2 "github.com/buger/goreplay/pkg/http"
-	"github.com/buger/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg"
+	http2 "github.com/reoring/goreplay/pkg/http"
+	"github.com/reoring/goreplay/pkg/input"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"

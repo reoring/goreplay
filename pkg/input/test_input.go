@@ -3,7 +3,7 @@ package input
 import (
 	"encoding/base64"
 	"errors"
-	"github.com/buger/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg"
 	"math/rand"
 	"time"
 )
@@ -26,6 +26,10 @@ func NewTestInput() (i *TestInput) {
 	return
 }
 
+func (i *TestInput) SetSkipHeader(skip bool) {
+	i.skipHeader = skip
+}
+
 // PluginRead reads message from this plugin
 func (i *TestInput) PluginRead() (*pkg.Message, error) {
 	var msg pkg.Message
@@ -33,9 +37,9 @@ func (i *TestInput) PluginRead() (*pkg.Message, error) {
 	case buf := <-i.data:
 		msg.Data = buf
 		if !i.skipHeader {
-			msg.Meta = pkg.payloadHeader(pkg.RequestPayload, pkg.uuid(), time.Now().UnixNano(), -1)
+			msg.Meta = pkg.PayloadHeader(pkg.RequestPayload, pkg.Uuid(), time.Now().UnixNano(), -1)
 		} else {
-			msg.Meta, msg.Data = pkg.payloadMetaWithBody(msg.Data)
+			msg.Meta, msg.Data = pkg.PayloadMetaWithBody(msg.Data)
 		}
 
 		return &msg, nil

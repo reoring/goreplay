@@ -3,7 +3,7 @@ package input
 import (
 	"context"
 	"fmt"
-	"github.com/buger/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg"
 	"log"
 	"net"
 	"strconv"
@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/buger/goreplay/capture"
-	"github.com/buger/goreplay/proto"
-	"github.com/buger/goreplay/size"
-	"github.com/buger/goreplay/tcp"
+	"github.com/reoring/goreplay/capture"
+	"github.com/reoring/goreplay/proto"
+	"github.com/reoring/goreplay/size"
+	"github.com/reoring/goreplay/tcp"
 )
 
 // RAWInputConfig represents configuration that can be applied on raw input

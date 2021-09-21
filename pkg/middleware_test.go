@@ -3,8 +3,8 @@ package pkg
 import (
 	"bytes"
 	"context"
-	"github.com/buger/goreplay/pkg/input"
-	"github.com/buger/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/input"
+	"github.com/reoring/goreplay/pkg/output"
 	"os"
 	"os/exec"
 	"strings"

@@ -1,6 +1,6 @@
 package output
 
-import "github.com/buger/goreplay/pkg"
+import "github.com/reoring/goreplay/pkg"
 
 type writeCallback func(*pkg.Message)
 

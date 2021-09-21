@@ -10,7 +10,7 @@ import (
 	"log"
 
 	"github.com/Shopify/sarama"
-	"github.com/buger/goreplay/proto"
+	"github.com/reoring/goreplay/proto"
 )
 
 // InputKafkaConfig should contains required information to

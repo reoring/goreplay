@@ -2,8 +2,8 @@ package input
 
 import (
 	"encoding/json"
-	"github.com/buger/goreplay/pkg"
-	"github.com/buger/goreplay/pkg/kafka"
+	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/kafka"
 	"log"
 	"strings"
 

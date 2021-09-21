@@ -11,7 +11,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/buger/goreplay/proto"
+	"github.com/reoring/goreplay/proto"
 )
 
 // TCPProtocol is a number to indicate type of protocol
