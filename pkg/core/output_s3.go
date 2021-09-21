@@ -1,9 +1,8 @@
-package output
+package core
 
 import (
 	_ "bufio"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/pro"
 	s32 "github.com/reoring/goreplay/pkg/s3"
 	"github.com/reoring/goreplay/pkg/settings"
@@ -72,7 +71,7 @@ func (o *S3Output) connect() {
 }
 
 // PluginWrite writes message to this plugin
-func (o *S3Output) PluginWrite(msg *plugin.Message) (n int, err error) {
+func (o *S3Output) PluginWrite(msg *Message) (n int, err error) {
 	return o.buffer.PluginWrite(msg)
 }
 

@@ -2,8 +2,7 @@ package limiter
 
 import (
 	"fmt"
-	"github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/plugin"
+	"github.com/reoring/goreplay/pkg/core"
 	"io"
 	"math/rand"
 	"strconv"
@@ -35,14 +34,14 @@ func parseLimitOptions(options string) (limit int, isPercent bool) {
 
 // NewLimiter constructor for Limiter, accepts plugin and options
 // `options` allow specifying relative or absolute limiting
-func NewLimiter(plugin interface{}, options string) plugin.PluginReadWriter {
+func NewLimiter(plugin interface{}, options string) core.PluginReadWriter {
 	l := new(Limiter)
 	l.limit, l.isPercent = parseLimitOptions(options)
 	l.plugin = plugin
 	l.currentTime = time.Now().UnixNano()
 
 	// FileInput have its own rate limiting. Unlike other inputs we're not just dropping requests, we can slow down or speed up request emitting.
-	if fi, ok := l.plugin.(*input.FileInput); ok && l.isPercent {
+	if fi, ok := l.plugin.(*core.FileInput); ok && l.isPercent {
 		fi.SetSpeedFactor(float64(l.limit) / float64(100))
 	}
 
@@ -51,7 +50,7 @@ func NewLimiter(plugin interface{}, options string) plugin.PluginReadWriter {
 
 func (l *Limiter) isLimited() bool {
 	// File input have its own limiting algorithm
-	if _, ok := l.plugin.(*input.FileInput); ok && l.isPercent {
+	if _, ok := l.plugin.(*core.FileInput); ok && l.isPercent {
 		return false
 	}
 
@@ -74,11 +73,11 @@ func (l *Limiter) isLimited() bool {
 }
 
 // PluginWrite writes message to this plugin
-func (l *Limiter) PluginWrite(msg *plugin.Message) (n int, err error) {
+func (l *Limiter) PluginWrite(msg *core.Message) (n int, err error) {
 	if l.isLimited() {
 		return 0, nil
 	}
-	if w, ok := l.plugin.(plugin.PluginWriter); ok {
+	if w, ok := l.plugin.(core.PluginWriter); ok {
 		return w.PluginWrite(msg)
 	}
 	// avoid further writing
@@ -86,8 +85,8 @@ func (l *Limiter) PluginWrite(msg *plugin.Message) (n int, err error) {
 }
 
 // PluginRead reads message from this plugin
-func (l *Limiter) PluginRead() (msg *plugin.Message, err error) {
-	if r, ok := l.plugin.(plugin.PluginReader); ok {
+func (l *Limiter) PluginRead() (msg *core.Message, err error) {
+	if r, ok := l.plugin.(core.PluginReader); ok {
 		msg, err = r.PluginRead()
 	} else {
 		// avoid further reading

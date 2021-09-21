@@ -1,8 +1,6 @@
-package output
+package core
 
 import (
-	"github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"github.com/reoring/goreplay/pkg/stat"
@@ -31,7 +29,7 @@ type BinaryOutput struct {
 	// aligned at 64bit. See https://github.com/golang/go/issues/599
 	activeWorkers int64
 	address       string
-	queue         chan *plugin.Message
+	queue         chan *Message
 	responses     chan response
 	needWorker    chan int
 	quit          chan struct{}
@@ -41,13 +39,13 @@ type BinaryOutput struct {
 
 // NewBinaryOutput constructor for BinaryOutput
 // Initialize workers
-func NewBinaryOutput(address string, config *BinaryOutputConfig) plugin.PluginReadWriter {
+func NewBinaryOutput(address string, config *BinaryOutputConfig) PluginReadWriter {
 	o := new(BinaryOutput)
 
 	o.address = address
 	o.config = config
 
-	o.queue = make(chan *plugin.Message, 1000)
+	o.queue = make(chan *Message, 1000)
 	o.responses = make(chan response, 1000)
 	o.needWorker = make(chan int, 1)
 	o.quit = make(chan struct{})
@@ -116,7 +114,7 @@ func (o *BinaryOutput) startWorker() {
 }
 
 // PluginWrite writes a message tothis plugin
-func (o *BinaryOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
+func (o *BinaryOutput) PluginWrite(msg *Message) (n int, err error) {
 	if !protocol.IsRequestPayload(msg.Meta) {
 		return len(msg.Data), nil
 	}
@@ -135,12 +133,12 @@ func (o *BinaryOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
 }
 
 // PluginRead reads a message from this plugin
-func (o *BinaryOutput) PluginRead() (*plugin.Message, error) {
+func (o *BinaryOutput) PluginRead() (*Message, error) {
 	var resp response
-	var msg plugin.Message
+	var msg Message
 	select {
 	case <-o.quit:
-		return nil, input.ErrorStopped
+		return nil, ErrorStopped
 	case resp = <-o.responses:
 	}
 	msg.Data = resp.payload
@@ -149,7 +147,7 @@ func (o *BinaryOutput) PluginRead() (*plugin.Message, error) {
 	return &msg, nil
 }
 
-func (o *BinaryOutput) sendRequest(client *tcp.TCPClient, msg *plugin.Message) {
+func (o *BinaryOutput) sendRequest(client *tcp.TCPClient, msg *Message) {
 	if !protocol.IsRequestPayload(msg.Meta) {
 		return
 	}

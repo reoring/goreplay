@@ -1,12 +1,10 @@
-package output
+package core
 
 import (
 	"bufio"
 	"compress/gzip"
 	"errors"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"io"
@@ -215,7 +213,7 @@ func (o *FileOutput) updateName() {
 }
 
 // PluginWrite writes message to this plugin
-func (o *FileOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
+func (o *FileOutput) PluginWrite(msg *Message) (n int, err error) {
 	if o.requestPerFile {
 		o.Lock()
 		meta := protocol.PayloadMeta(msg.Meta)
@@ -251,7 +249,7 @@ func (o *FileOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
 	n, err = o.writer.Write(msg.Meta)
 	nn, err = o.writer.Write(msg.Data)
 	n += nn
-	nn, err = o.writer.Write(input.PayloadSeparatorAsBytes)
+	nn, err = o.writer.Write(PayloadSeparatorAsBytes)
 	n += nn
 
 	o.totalFileSize += size.Size(n)

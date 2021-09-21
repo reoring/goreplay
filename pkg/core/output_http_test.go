@@ -1,11 +1,9 @@
-package output
+package core
 
 import (
 	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/emitter"
 	http2 "github.com/reoring/goreplay/pkg/http"
-	"github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"net/http"
@@ -18,7 +16,7 @@ import (
 func TestHTTPOutput(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	input := input.NewTestInput()
+	input := NewTestInput()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Header.Get("User-Agent") != "Gor" {
@@ -47,13 +45,13 @@ func TestHTTPOutput(t *testing.T) {
 	settings.Settings.ModifierConfig = http2.HTTPModifierConfig{Headers: headers, Methods: methods}
 
 	httpOutput := NewHTTPOutput(server.URL, &HTTPOutputConfig{TrackResponses: false})
-	output := NewTestOutput(func(*plugin.Message) {
+	output := NewTestOutput(func(*Message) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{httpOutput, output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{httpOutput, output},
 	}
 	plugins.All = append(plugins.All, input, output, httpOutput)
 
@@ -77,7 +75,7 @@ func TestHTTPOutput(t *testing.T) {
 func TestHTTPOutputKeepOriginalHost(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	input := input.NewTestInput()
+	input := NewTestInput()
 
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Host != "custom-host.com" {
@@ -93,9 +91,9 @@ func TestHTTPOutputKeepOriginalHost(t *testing.T) {
 
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{OriginalHost: true, SkipVerify: true})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -118,12 +116,12 @@ func TestHTTPOutputSSL(t *testing.T) {
 		wg.Done()
 	}))
 
-	input := input.NewTestInput()
+	input := NewTestInput()
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{SkipVerify: true})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -142,7 +140,7 @@ func TestHTTPOutputSSL(t *testing.T) {
 func TestHTTPOutputSessions(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	input := input.NewTestInput()
+	input := NewTestInput()
 	input.skipHeader = true
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -154,9 +152,9 @@ func TestHTTPOutputSessions(t *testing.T) {
 	settings.Settings.SplitOutput = true
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 	emitter := emitter.NewEmitter()
@@ -193,12 +191,12 @@ func BenchmarkHTTPOutput(b *testing.B) {
 	}))
 	defer server.Close()
 
-	input := input.NewTestInput()
+	input := NewTestInput()
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{WorkersMax: 1})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -222,12 +220,12 @@ func BenchmarkHTTPOutputTLS(b *testing.B) {
 	}))
 	defer server.Close()
 
-	input := input.NewTestInput()
+	input := NewTestInput()
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{SkipVerify: true, WorkersMax: 1})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 

@@ -1,11 +1,9 @@
-package output
+package core
 
 import (
 	"fmt"
 	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/emitter"
-	input3 "github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/settings"
 	"math/rand"
 	"os"
@@ -22,12 +20,12 @@ import (
 func TestFileOutput(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	input := input3.NewTestInput()
+	input := NewTestInput()
 	output := NewFileOutput("/tmp/test_requests.gor", &FileOutputConfig{FlushInterval: time.Minute, Append: true})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -44,15 +42,15 @@ func TestFileOutput(t *testing.T) {
 	emitter.Close()
 
 	var counter int64
-	input2 := input3.NewFileInput("/tmp/test_requests.gor", false, 100, 0, false)
-	output2 := NewTestOutput(func(*plugin.Message) {
+	input2 := NewFileInput("/tmp/test_requests.gor", false, 100, 0, false)
+	output2 := NewTestOutput(func(*Message) {
 		atomic.AddInt64(&counter, 1)
 		wg.Done()
 	})
 
-	plugins2 := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input2},
-		Outputs: []plugin.PluginWriter{output2},
+	plugins2 := &InOutPlugins{
+		Inputs:  []PluginReader{input2},
+		Outputs: []PluginWriter{output2},
 	}
 	plugins2.All = append(plugins2.All, input2, output2)
 
@@ -93,16 +91,16 @@ func TestFileOutputMultipleFiles(t *testing.T) {
 		t.Error("Should not initialize file if no writes")
 	}
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name1 := output.file.Name()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name2 := output.file.Name()
 
 	time.Sleep(time.Second)
 	output.updateName()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name3 := output.file.Name()
 
 	if name2 != name1 {
@@ -124,16 +122,16 @@ func TestFileOutputFilePerRequest(t *testing.T) {
 		t.Error("Should not initialize file if no writes")
 	}
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name1 := output.file.Name()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 2 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 2 1\r\n"), Data: []byte("test")})
 	name2 := output.file.Name()
 
 	time.Sleep(time.Second)
 	output.updateName()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 3 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 3 1\r\n"), Data: []byte("test")})
 	name3 := output.file.Name()
 
 	if name3 == name2 || name2 == name1 || name3 == name1 {
@@ -153,7 +151,7 @@ func TestFileOutputCompression(t *testing.T) {
 	}
 
 	for i := 0; i < 1000; i++ {
-		output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+		output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	}
 
 	name := output.file.Name()
@@ -212,15 +210,15 @@ func TestFileOutputAppendQueueLimitOverflow(t *testing.T) {
 
 	output := NewFileOutput(name, &FileOutputConfig{Append: false, FlushInterval: time.Minute, QueueLimit: 2})
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name1 := output.file.Name()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name2 := output.file.Name()
 
 	output.updateName()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name3 := output.file.Name()
 
 	if name2 != name1 || name1 != fmt.Sprintf("/tmp/%d_0", rnd) {
@@ -241,15 +239,15 @@ func TestFileOutputAppendQueueLimitNoOverflow(t *testing.T) {
 
 	output := NewFileOutput(name, &FileOutputConfig{Append: false, FlushInterval: time.Minute, QueueLimit: 3})
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name1 := output.file.Name()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name2 := output.file.Name()
 
 	output.updateName()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name3 := output.file.Name()
 
 	if name2 != name1 || name1 != fmt.Sprintf("/tmp/%d_0", rnd) {
@@ -270,15 +268,15 @@ func TestFileOutputAppendQueueLimitGzips(t *testing.T) {
 
 	output := NewFileOutput(name, &FileOutputConfig{Append: false, FlushInterval: time.Minute, QueueLimit: 2})
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name1 := output.file.Name()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name2 := output.file.Name()
 
 	output.updateName()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name3 := output.file.Name()
 
 	if name2 != name1 || name1 != fmt.Sprintf("/tmp/%d_0.gz", rnd) {
@@ -313,15 +311,15 @@ func TestFileOutputAppendSizeLimitOverflow(t *testing.T) {
 
 	output := NewFileOutput(name, &FileOutputConfig{Append: false, FlushInterval: time.Minute, SizeLimit: size.Size(2 * messageSize)})
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name1 := output.file.Name()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name2 := output.file.Name()
 
 	output.flush()
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
+	output.PluginWrite(&Message{Meta: []byte("1 1 1\r\n"), Data: []byte("test")})
 	name3 := output.file.Name()
 
 	if name2 != name1 || name1 != fmt.Sprintf("/tmp/%d_0", rnd) {

@@ -1,7 +1,6 @@
-package input
+package core
 
 import (
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"time"
 )
@@ -24,8 +23,8 @@ func NewDummyInput(options string) (di *DummyInput) {
 }
 
 // PluginRead reads message from this plugin
-func (i *DummyInput) PluginRead() (*plugin.Message, error) {
-	var msg plugin.Message
+func (i *DummyInput) PluginRead() (*Message, error) {
+	var msg Message
 	select {
 	case <-i.quit:
 		return nil, ErrorStopped

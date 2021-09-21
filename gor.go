@@ -6,8 +6,8 @@ import (
 	"expvar"
 	"flag"
 	"fmt"
+	"github.com/reoring/goreplay/pkg/core"
 	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/settings"
 	"github.com/reoring/goreplay/pkg/version"
 	"log"
@@ -75,7 +75,7 @@ func main() {
 	}
 
 	args := os.Args[1:]
-	var plugins *plugin.InOutPlugins
+	var plugins *core.InOutPlugins
 	if len(args) > 0 && args[0] == "file-server" {
 		if len(args) != 2 {
 			log.Fatal("You should specify port and IP (optional) for the file server. Example: `gor file-server :80`")
@@ -88,7 +88,7 @@ func main() {
 	} else {
 		flag.Parse()
 		settings.CheckSettings()
-		plugins = plugin.NewPlugins()
+		plugins = core.NewPlugins()
 	}
 
 	log.Printf("[PPID %d and PID %d] Version:%s\n", os.Getppid(), os.Getpid(), version.VERSION)

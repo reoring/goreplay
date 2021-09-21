@@ -3,10 +3,9 @@ package settings
 import (
 	"flag"
 	"fmt"
+	"github.com/reoring/goreplay/pkg/core"
 	"github.com/reoring/goreplay/pkg/http"
-	"github.com/reoring/goreplay/pkg/input"
 	"github.com/reoring/goreplay/pkg/kafka"
-	"github.com/reoring/goreplay/pkg/output"
 	"github.com/reoring/goreplay/pkg/version"
 	"os"
 	"sync"
@@ -44,10 +43,10 @@ type AppSettings struct {
 	OutputStdout bool `json:"output-stdout"`
 	OutputNull   bool `json:"output-null"`
 
-	InputTCP        MultiOption `json:"input-tcp"`
-	InputTCPConfig  input.TCPInputConfig
+	InputTCP       MultiOption `json:"input-tcp"`
+	InputTCPConfig core.TCPInputConfig
 	OutputTCP       MultiOption `json:"output-tcp"`
-	OutputTCPConfig output.TCPOutputConfig
+	OutputTCPConfig core.TCPOutputConfig
 	OutputTCPStats  bool `json:"output-tcp-stats"`
 
 	InputFile        MultiOption   `json:"input-file"`
@@ -56,10 +55,10 @@ type AppSettings struct {
 	InputFileDryRun    bool          `json:"input-file-dry-run"`
 	InputFileMaxWait time.Duration `json:"input-file-max-wait"`
 	OutputFile       MultiOption   `json:"output-file"`
-	OutputFileConfig output.FileOutputConfig
+	OutputFileConfig core.FileOutputConfig
 
 	InputRAW MultiOption `json:"input_raw"`
-	input.RAWInputConfig
+	core.RAWInputConfig
 
 	Middleware string `json:"middleware"`
 
@@ -67,10 +66,10 @@ type AppSettings struct {
 	OutputHTTP   MultiOption `json:"output-http"`
 	PrettifyHTTP bool        `json:"prettify-http"`
 
-	OutputHTTPConfig output.HTTPOutputConfig
+	OutputHTTPConfig core.HTTPOutputConfig
 
 	OutputBinary       MultiOption `json:"output-binary"`
-	OutputBinaryConfig output.BinaryOutputConfig
+	OutputBinaryConfig core.BinaryOutputConfig
 
 	ModifierConfig http.HTTPModifierConfig
 

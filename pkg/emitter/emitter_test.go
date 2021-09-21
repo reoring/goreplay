@@ -2,10 +2,8 @@ package emitter
 
 import (
 	"fmt"
+	"github.com/reoring/goreplay/pkg/core"
 	"github.com/reoring/goreplay/pkg/http"
-	"github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/output"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/pro"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
@@ -25,14 +23,14 @@ func TestMain(m *testing.M) {
 func TestEmitter(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	input := input.NewTestInput()
-	output := output.NewTestOutput(func(*plugin.Message) {
+	input := core.NewTestInput()
+	output := core.NewTestOutput(func(*core.Message) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &core.InOutPlugins{
+		Inputs:  []core.PluginReader{input},
+		Outputs: []core.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -51,16 +49,16 @@ func TestEmitter(t *testing.T) {
 func TestEmitterFiltered(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	input := input.NewTestInput()
+	input := core.NewTestInput()
 	input.SetSkipHeader(true)
 
-	output := output.NewTestOutput(func(*plugin.Message) {
+	output := core.NewTestOutput(func(*core.Message) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &core.InOutPlugins{
+		Inputs:  []core.PluginReader{input},
+		Outputs: []core.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -101,23 +99,23 @@ func TestEmitterFiltered(t *testing.T) {
 func TestEmitterSplitRoundRobin(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	input := input.NewTestInput()
+	input := core.NewTestInput()
 
 	var counter1, counter2 int32
 
-	output1 := output.NewTestOutput(func(*plugin.Message) {
+	output1 := core.NewTestOutput(func(*core.Message) {
 		atomic.AddInt32(&counter1, 1)
 		wg.Done()
 	})
 
-	output2 := output.NewTestOutput(func(*plugin.Message) {
+	output2 := core.NewTestOutput(func(*core.Message) {
 		atomic.AddInt32(&counter2, 1)
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output1, output2},
+	plugins := &core.InOutPlugins{
+		Inputs:  []core.PluginReader{input},
+		Outputs: []core.PluginWriter{output1, output2},
 	}
 
 	settings.Settings.SplitOutput = true
@@ -144,23 +142,23 @@ func TestEmitterSplitRoundRobin(t *testing.T) {
 func TestEmitterRoundRobin(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	input := input.NewTestInput()
+	input := core.NewTestInput()
 
 	var counter1, counter2 int32
 
-	output1 := output.NewTestOutput(func(*plugin.Message) {
+	output1 := core.NewTestOutput(func(*core.Message) {
 		counter1++
 		wg.Done()
 	})
 
-	output2 := output.NewTestOutput(func(*plugin.Message) {
+	output2 := core.NewTestOutput(func(*core.Message) {
 		counter2++
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output1, output2},
+	plugins := &core.InOutPlugins{
+		Inputs:  []core.PluginReader{input},
+		Outputs: []core.PluginWriter{output1, output2},
 	}
 	plugins.All = append(plugins.All, input, output1, output2)
 
@@ -188,28 +186,28 @@ func TestEmitterSplitSession(t *testing.T) {
 	wg := new(sync.WaitGroup)
 	wg.Add(200)
 
-	input := input.NewTestInput()
+	input := core.NewTestInput()
 	input.SetSkipHeader(true)
 
 	var counter1, counter2 int32
 
-	output1 := output.NewTestOutput(func(msg *plugin.Message) {
+	output1 := core.NewTestOutput(func(msg *core.Message) {
 		if protocol.PayloadID(msg.Meta)[0] == 'a' {
 			counter1++
 		}
 		wg.Done()
 	})
 
-	output2 := output.NewTestOutput(func(msg *plugin.Message) {
+	output2 := core.NewTestOutput(func(msg *core.Message) {
 		if protocol.PayloadID(msg.Meta)[0] == 'b' {
 			counter2++
 		}
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output1, output2},
+	plugins := &core.InOutPlugins{
+		Inputs:  []core.PluginReader{input},
+		Outputs: []core.PluginWriter{output1, output2},
 	}
 
 	settings.Settings.SplitOutput = true
@@ -243,15 +241,15 @@ func TestEmitterSplitSession(t *testing.T) {
 func BenchmarkEmitter(b *testing.B) {
 	wg := new(sync.WaitGroup)
 
-	input := input.NewTestInput()
+	input := core.NewTestInput()
 
-	output := output.NewTestOutput(func(*plugin.Message) {
+	output := core.NewTestOutput(func(*core.Message) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &core.InOutPlugins{
+		Inputs:  []core.PluginReader{input},
+		Outputs: []core.PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 

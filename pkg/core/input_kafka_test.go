@@ -1,4 +1,4 @@
-package input
+package core
 
 import (
 	"github.com/reoring/goreplay/pkg/kafka"

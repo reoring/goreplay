@@ -1,10 +1,8 @@
-package output
+package core
 
 import (
 	"bufio"
 	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"log"
@@ -20,12 +18,12 @@ func TestTCPOutput(t *testing.T) {
 	listener := startTCP(func(data []byte) {
 		wg.Done()
 	})
-	input := input.NewTestInput()
+	input := NewTestInput()
 	output := NewTCPOutput(listener.Addr().String(), &TCPOutputConfig{Workers: 10})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 
 	emitter := emitter.NewEmitter()
@@ -73,7 +71,7 @@ func BenchmarkTCPOutput(b *testing.B) {
 	listener := startTCP(func(data []byte) {
 		wg.Done()
 	})
-	input := input.NewTestInput()
+	input := NewTestInput()
 	input.data = make(chan []byte, b.N)
 	for i := 0; i < b.N; i++ {
 		input.EmitGET()
@@ -81,9 +79,9 @@ func BenchmarkTCPOutput(b *testing.B) {
 	wg.Add(b.N)
 	output := NewTCPOutput(listener.Addr().String(), &TCPOutputConfig{Workers: 10})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 
 	emitter := emitter.NewEmitter()
@@ -130,8 +128,8 @@ func TestBufferDistribution(t *testing.T) {
 	}
 }
 
-func getTestBytes() *plugin.Message {
-	return &plugin.Message{
+func getTestBytes() *Message {
+	return &Message{
 		Meta: protocol.PayloadHeader(protocol.RequestPayload, protocol.Uuid(), time.Now().UnixNano(), -1),
 		Data: []byte("GET / HTTP/1.1\r\nHost: www.w3.org\r\nUser-Agent: Go 1.1 package http\r\nAccept-Encoding: gzip\r\n\r\n"),
 	}

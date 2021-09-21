@@ -1,4 +1,4 @@
-package output
+package core
 
 import (
 	"bufio"
@@ -6,8 +6,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/reoring/goreplay/pkg/elasticsearch"
-	"github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"github.com/reoring/goreplay/pkg/stat"
@@ -64,14 +62,14 @@ type HTTPOutput struct {
 	elasticSearch *elasticsearch.ESPlugin
 	client        *HTTPClient
 	stopWorker    chan struct{}
-	queue         chan *plugin.Message
+	queue         chan *Message
 	responses     chan *response
 	stop          chan bool // Channel used only to indicate goroutine should shutdown
 }
 
 // NewHTTPOutput constructor for HTTPOutput
 // Initialize workers
-func NewHTTPOutput(address string, config *HTTPOutputConfig) plugin.PluginReadWriter {
+func NewHTTPOutput(address string, config *HTTPOutputConfig) PluginReadWriter {
 	o := new(HTTPOutput)
 	var err error
 	config.url, err = url.Parse(address)
@@ -115,7 +113,7 @@ func NewHTTPOutput(address string, config *HTTPOutputConfig) plugin.PluginReadWr
 		o.queueStats = stat.NewGorStat("output_http", o.config.StatsMs)
 	}
 
-	o.queue = make(chan *plugin.Message, o.config.QueueLen)
+	o.queue = make(chan *Message, o.config.QueueLen)
 	if o.config.TrackResponses {
 		o.responses = make(chan *response, o.config.QueueLen)
 	}
@@ -174,14 +172,14 @@ func (o *HTTPOutput) startWorker() {
 }
 
 // PluginWrite writes message to this plugin
-func (o *HTTPOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
+func (o *HTTPOutput) PluginWrite(msg *Message) (n int, err error) {
 	if !protocol.IsRequestPayload(msg.Meta) {
 		return len(msg.Data), nil
 	}
 
 	select {
 	case <-o.stop:
-		return 0, input.ErrorStopped
+		return 0, ErrorStopped
 	case o.queue <- msg:
 	}
 
@@ -199,15 +197,15 @@ func (o *HTTPOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
 }
 
 // PluginRead reads message from this plugin
-func (o *HTTPOutput) PluginRead() (*plugin.Message, error) {
+func (o *HTTPOutput) PluginRead() (*Message, error) {
 	if !o.config.TrackResponses {
-		return nil, input.ErrorStopped
+		return nil, ErrorStopped
 	}
 	var resp *response
-	var msg plugin.Message
+	var msg Message
 	select {
 	case <-o.stop:
-		return nil, input.ErrorStopped
+		return nil, ErrorStopped
 	case resp = <-o.responses:
 		msg.Data = resp.payload
 	}
@@ -217,7 +215,7 @@ func (o *HTTPOutput) PluginRead() (*plugin.Message, error) {
 	return &msg, nil
 }
 
-func (o *HTTPOutput) sendRequest(client *HTTPClient, msg *plugin.Message) {
+func (o *HTTPOutput) sendRequest(client *HTTPClient, msg *Message) {
 	if !protocol.IsRequestPayload(msg.Meta) {
 		return
 	}

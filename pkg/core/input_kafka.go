@@ -1,9 +1,8 @@
-package input
+package core
 
 import (
 	"encoding/json"
 	"github.com/reoring/goreplay/pkg/kafka"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"log"
@@ -81,9 +80,9 @@ func (i *KafkaInput) ErrorHandler(consumer sarama.PartitionConsumer) {
 }
 
 // PluginRead a reads message from this plugin
-func (i *KafkaInput) PluginRead() (*plugin.Message, error) {
+func (i *KafkaInput) PluginRead() (*Message, error) {
 	var message *sarama.ConsumerMessage
-	var msg plugin.Message
+	var msg Message
 	select {
 	case <-i.quit:
 		return nil, ErrorStopped

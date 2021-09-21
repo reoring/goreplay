@@ -1,10 +1,6 @@
-package output
+package core
 
-import (
-	"github.com/reoring/goreplay/pkg/plugin"
-)
-
-type writeCallback func(*plugin.Message)
+type writeCallback func(*Message)
 
 // TestOutput used in testing to intercept any output into callback
 type TestOutput struct {
@@ -12,7 +8,7 @@ type TestOutput struct {
 }
 
 // NewTestOutput constructor for TestOutput, accepts callback which get called on each incoming Write
-func NewTestOutput(cb writeCallback) plugin.PluginWriter {
+func NewTestOutput(cb writeCallback) PluginWriter {
 	i := new(TestOutput)
 	i.cb = cb
 
@@ -20,7 +16,7 @@ func NewTestOutput(cb writeCallback) plugin.PluginWriter {
 }
 
 // PluginWrite write message to this plugin
-func (i *TestOutput) PluginWrite(msg *plugin.Message) (int, error) {
+func (i *TestOutput) PluginWrite(msg *Message) (int, error) {
 	i.cb(msg)
 
 	return len(msg.Data) + len(msg.Meta), nil

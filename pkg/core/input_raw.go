@@ -1,9 +1,8 @@
-package input
+package core
 
 import (
 	"context"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"log"
@@ -80,9 +79,9 @@ func NewRAWInput(address string, config RAWInputConfig) (i *RAWInput) {
 }
 
 // PluginRead reads meassage from this plugin
-func (i *RAWInput) PluginRead() (*plugin.Message, error) {
+func (i *RAWInput) PluginRead() (*Message, error) {
 	var msgTCP *tcp.Message
-	var msg plugin.Message
+	var msg Message
 	select {
 	case <-i.quit:
 		return nil, ErrorStopped

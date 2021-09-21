@@ -2,10 +2,9 @@ package emitter
 
 import (
 	"fmt"
+	"github.com/reoring/goreplay/pkg/core"
 	"github.com/reoring/goreplay/pkg/http"
-	"github.com/reoring/goreplay/pkg/input"
 	"github.com/reoring/goreplay/pkg/middleware"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/pro"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
@@ -21,7 +20,7 @@ import (
 // Emitter represents an abject to manage plugins communication
 type Emitter struct {
 	sync.WaitGroup
-	plugins *plugin.InOutPlugins
+	plugins *core.InOutPlugins
 }
 
 // NewEmitter creates and initializes new Emitter object.
@@ -30,7 +29,7 @@ func NewEmitter() *Emitter {
 }
 
 // Start initialize loop for sending data from inputs to outputs
-func (e *Emitter) Start(plugins *plugin.InOutPlugins, middlewareCmd string) {
+func (e *Emitter) Start(plugins *core.InOutPlugins, middlewareCmd string) {
 	if settings.Settings.CopyBufferSize < 1 {
 		settings.Settings.CopyBufferSize = 5 << 20
 	}
@@ -55,7 +54,7 @@ func (e *Emitter) Start(plugins *plugin.InOutPlugins, middlewareCmd string) {
 	} else {
 		for _, in := range plugins.Inputs {
 			e.Add(1)
-			go func(in plugin.PluginReader) {
+			go func(in core.PluginReader) {
 				defer e.Done()
 				if err := CopyMulty(in, plugins.Outputs...); err != nil {
 					settings.Debug(2, fmt.Sprintf("[EMITTER] error during copy: %q", err))
@@ -80,7 +79,7 @@ func (e *Emitter) Close() {
 }
 
 // CopyMulty copies from 1 reader to multiple writers
-func CopyMulty(src plugin.PluginReader, writers ...plugin.PluginWriter) error {
+func CopyMulty(src core.PluginReader, writers ...core.PluginWriter) error {
 	wIndex := 0
 	modifier := http.NewHTTPModifier(&settings.Settings.ModifierConfig)
 	filteredRequests := make(map[string]int64)
@@ -90,7 +89,7 @@ func CopyMulty(src plugin.PluginReader, writers ...plugin.PluginWriter) error {
 	for {
 		msg, err := src.PluginRead()
 		if err != nil {
-			if err == input.ErrorStopped || err == io.EOF {
+			if err == core.ErrorStopped || err == io.EOF {
 				return nil
 			}
 			return err

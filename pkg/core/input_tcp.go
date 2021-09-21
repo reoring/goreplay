@@ -1,11 +1,10 @@
-package input
+package core
 
 import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"io"
@@ -15,7 +14,7 @@ import (
 
 // TCPInput used for internal communication
 type TCPInput struct {
-	data     chan *plugin.Message
+	data     chan *Message
 	listener net.Listener
 	address  string
 	config   *TCPInputConfig
@@ -32,7 +31,7 @@ type TCPInputConfig struct {
 // NewTCPInput constructor for TCPInput, accepts address with port
 func NewTCPInput(address string, config *TCPInputConfig) (i *TCPInput) {
 	i = new(TCPInput)
-	i.data = make(chan *plugin.Message, 1000)
+	i.data = make(chan *Message, 1000)
 	i.address = address
 	i.config = config
 	i.stop = make(chan bool)
@@ -43,7 +42,7 @@ func NewTCPInput(address string, config *TCPInputConfig) (i *TCPInput) {
 }
 
 // PluginRead returns data and details read from plugin
-func (i *TCPInput) PluginRead() (msg *plugin.Message, err error) {
+func (i *TCPInput) PluginRead() (msg *Message, err error) {
 	select {
 	case <-i.stop:
 		return nil, ErrorStopped
@@ -121,7 +120,7 @@ func (i *TCPInput) handleConnection(conn net.Conn) {
 		if bytes.Equal(PayloadSeparatorAsBytes[1:], line) {
 			// unread the '\n' before monkeys
 			buffer.UnreadByte()
-			var msg plugin.Message
+			var msg Message
 			msg.Meta, msg.Data = protocol.PayloadMetaWithBody(buffer.Bytes())
 			i.data <- &msg
 			buffer.Reset()

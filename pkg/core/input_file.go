@@ -1,4 +1,4 @@
-package input
+package core
 
 import (
 	"bufio"
@@ -8,8 +8,6 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/output"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	s32 "github.com/reoring/goreplay/pkg/s3"
 	"github.com/reoring/goreplay/pkg/settings"
@@ -238,7 +236,7 @@ func (i *FileInput) init() (err error) {
 		sess := session.Must(session.NewSession(s32.AwsConfig()))
 		svc := s3.New(sess)
 
-		bucket, key := output.ParseS3Url(i.path)
+		bucket, key := ParseS3Url(i.path)
 
 		params := &s3.ListObjectsInput{
 			Bucket: aws.String(bucket),
@@ -280,8 +278,8 @@ func (i *FileInput) SetSpeedFactor(speedFactor float64) {
 }
 
 // PluginRead reads message from this plugin
-func (i *FileInput) PluginRead() (*plugin.Message, error) {
-	var msg plugin.Message
+func (i *FileInput) PluginRead() (*Message, error) {
+	var msg Message
 	select {
 	case <-i.exit:
 		return nil, ErrorStopped

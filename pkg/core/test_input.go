@@ -1,9 +1,8 @@
-package input
+package core
 
 import (
 	"encoding/base64"
 	"errors"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"math/rand"
 	"time"
@@ -32,8 +31,8 @@ func (i *TestInput) SetSkipHeader(skip bool) {
 }
 
 // PluginRead reads message from this plugin
-func (i *TestInput) PluginRead() (*plugin.Message, error) {
-	var msg plugin.Message
+func (i *TestInput) PluginRead() (*Message, error) {
+	var msg Message
 	select {
 	case buf := <-i.data:
 		msg.Data = buf

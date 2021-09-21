@@ -1,11 +1,9 @@
-package output
+package core
 
 import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/reoring/goreplay/pkg/input"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"github.com/reoring/goreplay/pkg/stat"
@@ -20,7 +18,7 @@ import (
 type TCPOutput struct {
 	address     string
 	limit       int
-	buf         []chan *plugin.Message
+	buf         []chan *Message
 	bufStats    *stat.GorStat
 	config      *TCPOutputConfig
 	workerIndex uint32
@@ -38,7 +36,7 @@ type TCPOutputConfig struct {
 
 // NewTCPOutput constructor for TCPOutput
 // Initialize X workers which hold keep-alive connection
-func NewTCPOutput(address string, config *TCPOutputConfig) plugin.PluginWriter {
+func NewTCPOutput(address string, config *TCPOutputConfig) PluginWriter {
 	o := new(TCPOutput)
 
 	o.address = address
@@ -49,9 +47,9 @@ func NewTCPOutput(address string, config *TCPOutputConfig) plugin.PluginWriter {
 	}
 
 	// create X buffers and send the buffer index to the worker
-	o.buf = make([]chan *plugin.Message, o.config.Workers)
+	o.buf = make([]chan *Message, o.config.Workers)
 	for i := 0; i < o.config.Workers; i++ {
-		o.buf[i] = make(chan *plugin.Message, 100)
+		o.buf[i] = make(chan *Message, 100)
 		go o.worker(i)
 	}
 
@@ -87,7 +85,7 @@ func (o *TCPOutput) worker(bufferIndex int) {
 		msg := <-o.buf[bufferIndex]
 		if _, err = conn.Write(msg.Meta); err == nil {
 			if _, err = conn.Write(msg.Data); err == nil {
-				_, err = conn.Write(input.PayloadSeparatorAsBytes)
+				_, err = conn.Write(PayloadSeparatorAsBytes)
 			}
 		}
 
@@ -100,7 +98,7 @@ func (o *TCPOutput) worker(bufferIndex int) {
 	}
 }
 
-func (o *TCPOutput) getBufferIndex(msg *plugin.Message) int {
+func (o *TCPOutput) getBufferIndex(msg *Message) int {
 	if !o.config.Sticky {
 		o.workerIndex++
 		return int(o.workerIndex) % o.config.Workers
@@ -112,7 +110,7 @@ func (o *TCPOutput) getBufferIndex(msg *plugin.Message) int {
 }
 
 // PluginWrite writes message to this plugin
-func (o *TCPOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
+func (o *TCPOutput) PluginWrite(msg *Message) (n int, err error) {
 	if !protocol.IsOriginPayload(msg.Meta) {
 		return len(msg.Data), nil
 	}

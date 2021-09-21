@@ -1,8 +1,7 @@
-package output
+package core
 
 import (
 	"github.com/reoring/goreplay/pkg/kafka"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"testing"
 
 	"github.com/Shopify/sarama"
@@ -21,7 +20,7 @@ func TestOutputKafkaRAW(t *testing.T) {
 		UseJSON:  false,
 	}, nil)
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 2 3\n"), Data: []byte("GET / HTTP1.1\r\nHeader: 1\r\n\r\n")})
+	output.PluginWrite(&Message{Meta: []byte("1 2 3\n"), Data: []byte("GET / HTTP1.1\r\nHeader: 1\r\n\r\n")})
 
 	resp := <-producer.Successes()
 
@@ -44,7 +43,7 @@ func TestOutputKafkaJSON(t *testing.T) {
 		UseJSON:  true,
 	}, nil)
 
-	output.PluginWrite(&plugin.Message{Meta: []byte("1 2 3\n"), Data: []byte("GET / HTTP1.1\r\nHeader: 1\r\n\r\n")})
+	output.PluginWrite(&Message{Meta: []byte("1 2 3\n"), Data: []byte("GET / HTTP1.1\r\nHeader: 1\r\n\r\n")})
 
 	resp := <-producer.Successes()
 

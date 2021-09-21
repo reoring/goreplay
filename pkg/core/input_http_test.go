@@ -1,10 +1,8 @@
-package input
+package core
 
 import (
 	"bytes"
 	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/output"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/settings"
 	"net/http"
 	"strings"
@@ -18,13 +16,13 @@ func TestHTTPInput(t *testing.T) {
 
 	input := NewHTTPInput("127.0.0.1:0")
 	time.Sleep(time.Millisecond)
-	output := output.NewTestOutput(func(*plugin.Message) {
+	output := NewTestOutput(func(*Message) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -49,16 +47,16 @@ func TestInputHTTPLargePayload(t *testing.T) {
 	large[n-1] = '0'
 
 	input := NewHTTPInput("127.0.0.1:0")
-	output := output.NewTestOutput(func(msg *plugin.Message) {
+	output := NewTestOutput(func(msg *Message) {
 		_len := len(msg.Data)
 		if _len >= n { // considering http body CRLF
 			t.Errorf("expected body to be >= %d", n)
 		}
 		wg.Done()
 	})
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 

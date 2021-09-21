@@ -1,9 +1,8 @@
-package output
+package core
 
 import (
 	"encoding/json"
 	"github.com/reoring/goreplay/pkg/kafka"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"github.com/reoring/goreplay/pkg/settings"
 	"log"
@@ -27,7 +26,7 @@ type KafkaOutput struct {
 const KafkaOutputFrequency = 500
 
 // NewKafkaOutput creates instance of kafka producer client  with TLS config
-func NewKafkaOutput(address string, config *kafka.OutputKafkaConfig, tlsConfig *kafka.KafkaTLSConfig) plugin.PluginWriter {
+func NewKafkaOutput(address string, config *kafka.OutputKafkaConfig, tlsConfig *kafka.KafkaTLSConfig) PluginWriter {
 	c := kafka.NewKafkaConfig(tlsConfig)
 
 	var producer sarama.AsyncProducer
@@ -67,7 +66,7 @@ func (o *KafkaOutput) ErrorHandler() {
 }
 
 // PluginWrite writes a message to this plugin
-func (o *KafkaOutput) PluginWrite(msg *plugin.Message) (n int, err error) {
+func (o *KafkaOutput) PluginWrite(msg *Message) (n int, err error) {
 	var message sarama.StringEncoder
 
 	if !o.config.UseJSON {

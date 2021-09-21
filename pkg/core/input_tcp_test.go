@@ -1,4 +1,4 @@
-package input
+package core
 
 import (
 	"bytes"
@@ -9,8 +9,6 @@ import (
 	"encoding/pem"
 	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/output"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"log"
@@ -26,13 +24,13 @@ func TestTCPInput(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
 	input := NewTCPInput("127.0.0.1:0", &TCPInputConfig{})
-	output := output.NewTestOutput(func(*plugin.Message) {
+	output := NewTestOutput(func(*Message) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -111,13 +109,13 @@ func TestTCPInputSecure(t *testing.T) {
 		CertificatePath: serverCertPemFile.Name(),
 		KeyPath:         serverPrivPemFile.Name(),
 	})
-	output := output.NewTestOutput(func(*plugin.Message) {
+	output := NewTestOutput(func(*Message) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 

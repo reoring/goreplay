@@ -1,10 +1,8 @@
-package input
+package core
 
 import (
 	"bytes"
 	"github.com/reoring/goreplay/pkg/emitter"
-	"github.com/reoring/goreplay/pkg/output"
-	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/settings"
 	"io/ioutil"
 	"net"
@@ -54,7 +52,7 @@ func TestRAWInputIPv4(t *testing.T) {
 	}
 	input := NewRAWInput(listener.Addr().String(), conf)
 
-	output := output.NewTestOutput(func(msg *plugin.Message) {
+	output := NewTestOutput(func(msg *Message) {
 		if msg.Meta[0] == '1' {
 			if len(proto.Header(msg.Data, []byte("X-Real-IP"))) == 0 {
 				t.Error("Should have X-Real-IP header")
@@ -67,9 +65,9 @@ func TestRAWInputIPv4(t *testing.T) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -123,7 +121,7 @@ func TestRAWInputNoKeepAlive(t *testing.T) {
 	}
 	input := NewRAWInput(":"+port, conf)
 	var respCounter, reqCounter int64
-	output := output.NewTestOutput(func(msg *plugin.Message) {
+	output := NewTestOutput(func(msg *Message) {
 		if msg.Meta[0] == '1' {
 			atomic.AddInt64(&reqCounter, 1)
 			wg.Done()
@@ -133,9 +131,9 @@ func TestRAWInputNoKeepAlive(t *testing.T) {
 		}
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
@@ -189,7 +187,7 @@ func TestRAWInputIPv6(t *testing.T) {
 	}
 	input := NewRAWInput(originAddr, conf)
 
-	output := output.NewTestOutput(func(msg *plugin.Message) {
+	output := NewTestOutput(func(msg *Message) {
 		if msg.Meta[0] == '1' {
 			atomic.AddInt64(&reqCounter, 1)
 		} else {
@@ -198,9 +196,9 @@ func TestRAWInputIPv6(t *testing.T) {
 		wg.Done()
 	})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 
 	emitter := emitter.NewEmitter()
@@ -260,11 +258,11 @@ func TestInputRAWChunkedEncoding(t *testing.T) {
 	}))
 	defer replay.Close()
 
-	httpOutput := output.NewHTTPOutput(replay.URL, &output.HTTPOutputConfig{})
+	httpOutput := NewHTTPOutput(replay.URL, &HTTPOutputConfig{})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{httpOutput},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{httpOutput},
 	}
 	plugins.All = append(plugins.All, input, httpOutput)
 
@@ -326,7 +324,7 @@ func BenchmarkRAWInputWithReplay(b *testing.B) {
 	}
 	input := NewRAWInput(originAddr, conf)
 
-	testOutput := output.NewTestOutput(func(msg *plugin.Message) {
+	testOutput := NewTestOutput(func(msg *Message) {
 		if msg.Meta[0] == '1' {
 			reqCounter++
 		} else {
@@ -334,11 +332,11 @@ func BenchmarkRAWInputWithReplay(b *testing.B) {
 		}
 		wg.Done()
 	})
-	httpOutput := output.NewHTTPOutput("http://"+replayAddr, &output.HTTPOutputConfig{})
+	httpOutput := NewHTTPOutput("http://"+replayAddr, &HTTPOutputConfig{})
 
-	plugins := &plugin.InOutPlugins{
-		Inputs:  []plugin.PluginReader{input},
-		Outputs: []plugin.PluginWriter{testOutput, httpOutput},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{testOutput, httpOutput},
 	}
 
 	emitter := emitter.NewEmitter()

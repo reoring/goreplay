@@ -2,7 +2,7 @@ package tcp
 
 import (
 	"crypto/tls"
-	"github.com/reoring/goreplay/pkg/output"
+	"github.com/reoring/goreplay/pkg/core"
 	"github.com/reoring/goreplay/pkg/settings"
 	"io"
 	"net"
@@ -150,7 +150,7 @@ func (c *TCPClient) Send(data []byte) (response []byte, err error) {
 			}
 		} else {
 			if currentChunk == nil {
-				currentChunk = make([]byte, output.ReadChunkSize)
+				currentChunk = make([]byte, core.ReadChunkSize)
 			}
 
 			n, err = c.conn.Read(currentChunk)
@@ -165,8 +165,8 @@ func (c *TCPClient) Send(data []byte) (response []byte, err error) {
 			readBytes += int(n)
 		}
 
-		if readBytes >= output.MaxResponseSize {
-			settings.Debug(1, "[TCPClient] Body is more than the max size", output.MaxResponseSize,
+		if readBytes >= core.MaxResponseSize {
+			settings.Debug(1, "[TCPClient] Body is more than the max size", core.MaxResponseSize,
 				c.baseURL)
 			break
 		}
