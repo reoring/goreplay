@@ -219,7 +219,7 @@ func init() {
 
 }
 
-func checkSettings() {
+func CheckSettings() {
 	if Settings.OutputFileConfig.SizeLimit < 1 {
 		Settings.OutputFileConfig.SizeLimit.Set("32mb")
 	}

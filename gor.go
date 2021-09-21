@@ -6,7 +6,6 @@ import (
 	"expvar"
 	"flag"
 	"fmt"
-	"github.com/reoring/goreplay/pkg"
 	"github.com/reoring/goreplay/pkg/emitter"
 	"github.com/reoring/goreplay/pkg/plugin"
 	"github.com/reoring/goreplay/pkg/settings"
@@ -88,7 +87,7 @@ func main() {
 		log.Fatal(http.ListenAndServe(args[1], loggingMiddleware(args[1], http.FileServer(http.Dir(dir)))))
 	} else {
 		flag.Parse()
-		pkg.checkSettings()
+		settings.CheckSettings()
 		plugins = plugin.NewPlugins()
 	}
 
