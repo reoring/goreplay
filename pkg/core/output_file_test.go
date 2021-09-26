@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/protocol"
 	"math/rand"
 	"os"
 	"reflect"
@@ -52,7 +52,7 @@ func TestFileOutput(t *testing.T) {
 	}
 	plugins2.All = append(plugins2.All, input2, output2)
 
-	emitter2 := emitter.NewEmitter()
+	emitter2 := NewEmitter()
 	go emitter2.Start(plugins2, Settings.Middleware)
 
 	wg.Wait()
@@ -305,7 +305,7 @@ func TestFileOutputAppendSizeLimitOverflow(t *testing.T) {
 
 	message := []byte("1 1 1\r\ntest")
 
-	messageSize := len(message) + len(pkg.payloadSeparator)
+	messageSize := len(message) + len(protocol.PayloadSeparator)
 
 	output := NewFileOutput(name, &FileOutputConfig{Append: false, FlushInterval: time.Minute, SizeLimit: size.Size(2 * messageSize)})
 

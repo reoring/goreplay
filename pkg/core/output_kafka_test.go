@@ -15,7 +15,7 @@ func TestOutputKafkaRAW(t *testing.T) {
 	producer.ExpectInputAndSucceed()
 
 	output := NewKafkaOutput("", &kafka.OutputKafkaConfig{
-		producer: producer,
+		Producer: producer,
 		Topic:    "test",
 		UseJSON:  false,
 	}, nil)
@@ -38,7 +38,7 @@ func TestOutputKafkaJSON(t *testing.T) {
 	producer.ExpectInputAndSucceed()
 
 	output := NewKafkaOutput("", &kafka.OutputKafkaConfig{
-		producer: producer,
+		Producer: producer,
 		Topic:    "test",
 		UseJSON:  true,
 	}, nil)
