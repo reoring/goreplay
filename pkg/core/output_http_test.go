@@ -1,8 +1,7 @@
 package core
 
 import (
-	"github.com/reoring/goreplay/pkg"
-	http2 "github.com/reoring/goreplay/pkg/http"
+	"github.com/reoring/goreplay/pkg/protocol"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -38,7 +37,7 @@ func TestHTTPOutput(t *testing.T) {
 	}))
 	defer server.Close()
 
-	headers := HTTPHeaders{http2.httpHeader{"User-Agent", "Gor"}}
+	headers := HTTPHeaders{httpHeader{"User-Agent", "Gor"}}
 	methods := HTTPMethods{[]byte("GET"), []byte("PUT"), []byte("POST")}
 	Settings.ModifierConfig = HTTPModifierConfig{Headers: headers, Methods: methods}
 
@@ -84,7 +83,7 @@ func TestHTTPOutputKeepOriginalHost(t *testing.T) {
 	}))
 	defer server.Close()
 
-	headers := HTTPHeaders{http2.httpHeader{"Host", "custom-host.com"}}
+	headers := HTTPHeaders{httpHeader{"Host", "custom-host.com"}}
 	Settings.ModifierConfig = HTTPModifierConfig{Headers: headers}
 
 	output := NewHTTPOutput(server.URL, &HTTPOutputConfig{OriginalHost: true, SkipVerify: true})
@@ -163,13 +162,13 @@ func TestHTTPOutputSessions(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1) // OPTIONS should be ignored
-		copy(uuid1[20:], pkg.randByte(4))
+		copy(uuid1[20:], protocol.RandByte(4))
 		input.EmitBytes([]byte("1 " + string(uuid1) + " 1\n" + "GET / HTTP/1.1\r\n\r\n"))
 	}
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1) // OPTIONS should be ignored
-		copy(uuid2[20:], pkg.randByte(4))
+		copy(uuid2[20:], protocol.RandByte(4))
 		input.EmitBytes([]byte("1 " + string(uuid2) + " 1\n" + "GET / HTTP/1.1\r\n\r\n"))
 	}
 

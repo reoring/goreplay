@@ -18,7 +18,7 @@ func TestInputKafkaRAW(t *testing.T) {
 	)
 
 	input := NewKafkaInput("", &kafka.InputKafkaConfig{
-		consumer: consumer,
+		Consumer: consumer,
 		Topic:    "test",
 		UseJSON:  false,
 	}, nil)
@@ -44,7 +44,7 @@ func TestInputKafkaJSON(t *testing.T) {
 	)
 
 	input := NewKafkaInput("", &kafka.InputKafkaConfig{
-		consumer: consumer,
+		Consumer: consumer,
 		Topic:    "test",
 		UseJSON:  true,
 	}, nil)

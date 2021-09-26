@@ -7,7 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/reoring/goreplay/pkg"
+	"github.com/reoring/goreplay/pkg/protocol"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -135,7 +135,7 @@ func TestTCPInputSecure(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		conn.Write(msg)
-		conn.Write([]byte(pkg.payloadSeparator))
+		conn.Write([]byte(protocol.PayloadSeparator))
 	}
 
 	wg.Wait()

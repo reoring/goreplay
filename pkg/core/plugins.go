@@ -49,7 +49,7 @@ func extractLimitOptions(options string) (string, string) {
 // Automatically detects type of plugin and initialize it
 //
 // See this article if curious about reflect stuff below: http://blog.burntsushi.net/type-parametric-functions-golang
-func (plugins *InOutPlugins) registerPlugin(constructor interface{}, options ...interface{}) {
+func (plugins *InOutPlugins) RegisterPlugin(constructor interface{}, options ...interface{}) {
 	var path, limit string
 	vc := reflect.ValueOf(constructor)
 
@@ -90,47 +90,47 @@ func NewPlugins() *InOutPlugins {
 	plugins := new(InOutPlugins)
 
 	for _, options := range Settings.InputDummy {
-		plugins.registerPlugin(NewDummyInput, options)
+		plugins.RegisterPlugin(NewDummyInput, options)
 	}
 
 	for range Settings.OutputDummy {
-		plugins.registerPlugin(NewDummyOutput)
+		plugins.RegisterPlugin(NewDummyOutput)
 	}
 
 	if Settings.OutputStdout {
-		plugins.registerPlugin(NewDummyOutput)
+		plugins.RegisterPlugin(NewDummyOutput)
 	}
 
 	if Settings.OutputNull {
-		plugins.registerPlugin(NewNullOutput)
+		plugins.RegisterPlugin(NewNullOutput)
 	}
 
 	for _, options := range Settings.InputRAW {
-		plugins.registerPlugin(NewRAWInput, options, Settings.RAWInputConfig)
+		plugins.RegisterPlugin(NewRAWInput, options, Settings.RAWInputConfig)
 	}
 
 	for _, options := range Settings.InputTCP {
-		plugins.registerPlugin(NewTCPInput, options, &Settings.InputTCPConfig)
+		plugins.RegisterPlugin(NewTCPInput, options, &Settings.InputTCPConfig)
 	}
 
 	for _, options := range Settings.OutputTCP {
-		plugins.registerPlugin(NewTCPOutput, options, &Settings.OutputTCPConfig)
+		plugins.RegisterPlugin(NewTCPOutput, options, &Settings.OutputTCPConfig)
 	}
 
 	for _, options := range Settings.InputFile {
-		plugins.registerPlugin(NewFileInput, options, Settings.InputFileLoop, Settings.InputFileReadDepth, Settings.InputFileMaxWait, Settings.InputFileDryRun)
+		plugins.RegisterPlugin(NewFileInput, options, Settings.InputFileLoop, Settings.InputFileReadDepth, Settings.InputFileMaxWait, Settings.InputFileDryRun)
 	}
 
 	for _, path := range Settings.OutputFile {
 		if strings.HasPrefix(path, "s3://") {
-			plugins.registerPlugin(NewS3Output, path, &Settings.OutputFileConfig)
+			plugins.RegisterPlugin(NewS3Output, path, &Settings.OutputFileConfig)
 		} else {
-			plugins.registerPlugin(NewFileOutput, path, &Settings.OutputFileConfig)
+			plugins.RegisterPlugin(NewFileOutput, path, &Settings.OutputFileConfig)
 		}
 	}
 
 	for _, options := range Settings.InputHTTP {
-		plugins.registerPlugin(NewHTTPInput, options)
+		plugins.RegisterPlugin(NewHTTPInput, options)
 	}
 
 	// If we explicitly set Host header http output should not rewrite it
@@ -143,19 +143,19 @@ func NewPlugins() *InOutPlugins {
 	}
 
 	for _, options := range Settings.OutputHTTP {
-		plugins.registerPlugin(NewHTTPOutput, options, &Settings.OutputHTTPConfig)
+		plugins.RegisterPlugin(NewHTTPOutput, options, &Settings.OutputHTTPConfig)
 	}
 
 	for _, options := range Settings.OutputBinary {
-		plugins.registerPlugin(NewBinaryOutput, options, &Settings.OutputBinaryConfig)
+		plugins.RegisterPlugin(NewBinaryOutput, options, &Settings.OutputBinaryConfig)
 	}
 
 	if Settings.OutputKafkaConfig.Host != "" && Settings.OutputKafkaConfig.Topic != "" {
-		plugins.registerPlugin(NewKafkaOutput, "", &Settings.OutputKafkaConfig, &Settings.KafkaTLSConfig)
+		plugins.RegisterPlugin(NewKafkaOutput, "", &Settings.OutputKafkaConfig, &Settings.KafkaTLSConfig)
 	}
 
 	if Settings.InputKafkaConfig.Host != "" && Settings.InputKafkaConfig.Topic != "" {
-		plugins.registerPlugin(NewKafkaInput, "", &Settings.InputKafkaConfig, &Settings.KafkaTLSConfig)
+		plugins.RegisterPlugin(NewKafkaInput, "", &Settings.InputKafkaConfig, &Settings.KafkaTLSConfig)
 	}
 
 	return plugins
