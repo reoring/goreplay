@@ -307,6 +307,9 @@ func (c *HTTPClient) Send(data []byte) ([]byte, error) {
 	req.Host = "test-v2.test-dev.svc.cluster.local"
 	req.Header.Set("x-reoring", "test")
 
+	req.Header.Set("Knative-Serving-Namespace", "test-dev")
+	req.Header.Set("Knative-Serving-Revision", "test-v2")
+
 	// fix #862
 	if c.config.url.Path == "" && c.config.url.RawQuery == "" {
 		req.URL.Scheme = c.config.url.Scheme
