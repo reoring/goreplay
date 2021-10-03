@@ -284,7 +284,7 @@ func NewHTTPClient(config *HTTPOutputConfig) *HTTPClient {
 	return client
 }
 
-// Send sends an http request using client create by NewHTTPClient
+// Send sends a http request using client create by NewHTTPClient
 func (c *HTTPClient) Send(data []byte) ([]byte, error) {
 	var req *http.Request
 	var resp *http.Response
@@ -302,6 +302,9 @@ func (c *HTTPClient) Send(data []byte) ([]byte, error) {
 	if !c.config.OriginalHost {
 		req.Host = c.config.url.Host
 	}
+
+	req.Host = "test-v2.test-dev.svc.cluster.local"
+	req.Header.Set("x-reoring", "test")
 
 	// fix #862
 	if c.config.url.Path == "" && c.config.url.RawQuery == "" {
