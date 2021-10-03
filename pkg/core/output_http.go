@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
+	"github.com/kr/pretty"
 	"github.com/reoring/goreplay/pkg/protocol"
 	"log"
 	"math"
@@ -318,6 +319,8 @@ func (c *HTTPClient) Send(data []byte) ([]byte, error) {
 	req.Close = false
 	// it's an error if this is not equal to empty string
 	req.RequestURI = ""
+
+	log.Printf("%# v", pretty.Formatter(req))
 
 	resp, err = c.Client.Do(req)
 	if err != nil {
