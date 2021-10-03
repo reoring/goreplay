@@ -215,7 +215,7 @@ func NewFileInput(path string, loop bool, readDepth int, maxWait time.Duration, 
 	i.readDepth = readDepth
 
 	exportedVar := expvar.Get(expvarName)
-	if exportedVar != nil {
+	if exportedVar == nil {
 		i.stats = expvar.NewMap(expvarName)
 	}
 
