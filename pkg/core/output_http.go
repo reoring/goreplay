@@ -324,12 +324,13 @@ func (c *HTTPClient) Send(data []byte) ([]byte, error) {
 	req.RequestURI = ""
 
 	log.Printf("%# v", pretty.Formatter(req))
-	log.Printf("%# v", pretty.Formatter(resp))
 
 	resp, err = c.Client.Do(req)
 	if err != nil {
+		log.Printf("%# v", pretty.Formatter(err))
 		return nil, err
 	}
+	log.Printf("%# v", pretty.Formatter(resp))
 	if c.config.TrackResponses {
 		return httputil.DumpResponse(resp, true)
 	}
