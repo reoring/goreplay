@@ -78,9 +78,6 @@ func NewHTTPOutput(address string, config *HTTPOutputConfig) PluginReadWriter {
 		config.url.Scheme = "http"
 	}
 	config.rawURL = config.url.String()
-	if config.Timeout < time.Millisecond*100 {
-		config.Timeout = time.Second
-	}
 	if config.BufferSize <= 0 {
 		config.BufferSize = 100 * 1024 // 100kb
 	}
