@@ -304,11 +304,11 @@ func (c *HTTPClient) Send(data []byte) ([]byte, error) {
 		req.Host = c.config.url.Host
 	}
 
-	req.Host = "test-v2.test-dev.svc.cluster.local"
+	req.Host = "test2-v2.test-dev.svc.cluster.local"
 	req.Header.Set("x-reoring", "test")
 
 	req.Header.Set("Knative-Serving-Namespace", "test-dev")
-	req.Header.Set("Knative-Serving-Revision", "test-v2")
+	req.Header.Set("Knative-Serving-Revision", "test2-v2")
 
 	// fix #862
 	if c.config.url.Path == "" && c.config.url.RawQuery == "" {
@@ -324,6 +324,7 @@ func (c *HTTPClient) Send(data []byte) ([]byte, error) {
 	req.RequestURI = ""
 
 	log.Printf("%# v", pretty.Formatter(req))
+	log.Printf("%# v", pretty.Formatter(resp))
 
 	resp, err = c.Client.Do(req)
 	if err != nil {
