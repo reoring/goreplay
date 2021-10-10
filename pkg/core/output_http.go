@@ -46,6 +46,8 @@ type HTTPOutputConfig struct {
 	WorkerTimeout  time.Duration `json:"output-http-worker-timeout"`
 	BufferSize     size.Size     `json:"output-http-response-buffer"`
 	SkipVerify     bool          `json:"output-http-skip-verify"`
+	Host           string        `json:"output-http-host"`
+	Headers        map[string]string `json:"output-http-headers"`
 	rawURL         string
 	url            *url.URL
 }
@@ -297,15 +299,11 @@ func (c *HTTPClient) Send(data []byte) ([]byte, error) {
 		return nil, nil
 	}
 
-	if !c.config.OriginalHost {
-		req.Host = c.config.url.Host
+	req.Host = c.config.Host
+
+	for key, _ := range c.config.Headers {
+		req.Header.Set(key, c.config.Headers[key])
 	}
-
-	req.Host = "test2-v2.test-dev.svc.cluster.local"
-	req.Header.Set("x-reoring", "test")
-
-	req.Header.Set("Knative-Serving-Namespace", "test-dev")
-	req.Header.Set("Knative-Serving-Revision", "test2-v2")
 
 	// fix #862
 	if c.config.url.Path == "" && c.config.url.RawQuery == "" {
